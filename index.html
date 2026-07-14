@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0f14">
+<title>Bitácora</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d0f14'/><rect x='20' y='44' width='60' height='12' fill='%23ff8a3d'/></svg>">
+<style>
+:root{--ink:#0d0f14;--panel:#161a22;--panel-2:#1d222c;--line:#2a3140;--text:#e8eaf0;
+--dim:#8790a3;--signal:#ff8a3d;--steel:#5aa9e6;--good:#4ade80;--violet:#a78bfa;--pad:16px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--ink);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+font-size:15px;line-height:1.45;padding-bottom:84px;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+header{position:sticky;top:0;z-index:20;background:rgba(13,15,20,.94);backdrop-filter:blur(12px);
+border-bottom:1px solid var(--line);padding:14px var(--pad) 0}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand h1{margin:0;font-size:19px;letter-spacing:.07em;font-weight:800;text-transform:uppercase}
+.brand h1 span{color:var(--signal)}
+.hb{display:flex;align-items:center;gap:8px}
+.wk{font-size:11px;color:var(--dim);text-align:right;line-height:1.3}
+.wk b{color:var(--text)}
+.ubtn{background:var(--panel-2);border:1px solid var(--line);color:var(--dim);font:inherit;
+font-size:11px;font-weight:700;padding:6px 9px;border-radius:7px;cursor:pointer}
+.ubtn.on{color:var(--signal);border-color:rgba(255,138,61,.4)}
+nav{display:flex;gap:3px;overflow-x:auto;margin-top:12px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;background:none;border:0;color:var(--dim);font:inherit;font-weight:700;
+font-size:12px;letter-spacing:.07em;text-transform:uppercase;padding:10px 11px;cursor:pointer;
+border-bottom:2px solid transparent}
+nav button.on{color:var(--text);border-bottom-color:var(--signal)}
+nav button.rest{color:#5c6478;font-weight:500}
+nav button.sum{color:var(--steel)}
+main{padding:var(--pad)}
+.phase{border-radius:12px;padding:13px 14px;margin-bottom:12px;border:1px solid}
+.phase .top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.phase .ttl{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.phase .pill{margin-left:auto;font-size:10px;padding:3px 8px;border-radius:20px;font-weight:700;background:rgba(255,255,255,.07)}
+.phase p{margin:0;font-size:13px;line-height:1.5;color:var(--dim)}
+.phase .tech{margin-top:8px;font-size:12px;padding:7px 9px;border-radius:7px;background:rgba(0,0,0,.25);font-weight:600}
+.p-intro{background:rgba(90,169,230,.08);border-color:rgba(90,169,230,.3)}.p-intro .ttl{color:var(--steel)}
+.p-accum{background:rgba(255,138,61,.08);border-color:rgba(255,138,61,.3)}.p-accum .ttl{color:var(--signal)}
+.p-intens{background:rgba(167,139,250,.09);border-color:rgba(167,139,250,.32)}.p-intens .ttl{color:var(--violet)}
+.p-deload{background:rgba(74,222,128,.07);border-color:rgba(74,222,128,.28)}.p-deload .ttl{color:var(--good)}
+.bar{height:5px;border-radius:4px;display:flex;gap:2px;margin-top:11px}
+.bar i{flex:1;background:#2a3140;border-radius:2px}
+.bar i.done{background:#3f4a5e}.bar i.now{background:var(--signal)}.bar i.dl{background:var(--good);opacity:.45}
+.block{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.block>h3{margin:0;padding:11px 14px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+color:var(--dim);font-weight:700;border-bottom:1px solid var(--line);background:var(--panel-2);display:flex;gap:8px}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700;letter-spacing:.04em}
+.block>h3 .tag{margin-left:auto}
+.t-mov{background:rgba(90,169,230,.14);color:var(--steel)}
+.t-pow{background:rgba(255,138,61,.14);color:var(--signal)}
+.t-fin{background:rgba(74,222,128,.12);color:var(--good)}
+.t-fore{background:rgba(167,139,250,.14);color:var(--violet)}
+.t-alt{background:rgba(90,169,230,.13);color:var(--steel)}
+.block ul{margin:0;padding:12px 14px;list-style:none;color:var(--dim);font-size:14px}
+.block ul li{padding:2px 0}
+.block ul li::before{content:"·";color:var(--signal);margin-right:8px}
+.ex{border-bottom:1px solid var(--line)}.ex:last-child{border-bottom:0}
+.ex-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.ex-name{flex:1;min-width:0}
+.ex-name .n{font-weight:650;font-size:14.5px;line-height:1.28}
+.ex-name .m{font-size:11.5px;color:var(--dim);margin-top:3px}
+.chev{color:#4a5265;font-size:11px;transition:transform .18s}
+.ex.open .chev{transform:rotate(90deg)}
+.cue{width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:#333a49}
+.cue.done{background:var(--good)}
+.cue.up{background:var(--signal);box-shadow:0 0 0 3px rgba(255,138,61,.16)}
+.ex-body{display:none;padding:0 14px 14px}
+.ex.open .ex-body{display:block}
+select.var{width:100%;background:#10131a;border:1px solid var(--line);color:var(--text);
+border-radius:8px;padding:10px;font:inherit;font-size:13.5px;margin-bottom:10px}
+select.var:focus{outline:none;border-color:var(--steel)}
+.setrow{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.setrow .lbl{width:24px;flex:0 0 24px;font-size:11px;color:#5c6478;font-weight:700;text-align:center}
+.setrow .lbl.last{color:var(--signal)}
+.setrow input{flex:1;min-width:0;background:#10131a;border:1px solid var(--line);color:var(--text);
+border-radius:8px;padding:10px 6px;font:inherit;font-size:15px;text-align:center;font-variant-numeric:tabular-nums}
+.setrow input:focus{outline:none;border-color:var(--steel)}
+.setrow input::placeholder{color:#3d4453}
+.setrow .x{color:#4a5265;font-size:12px}
+.setrow .eff{flex:0 0 62px;font-size:10.5px;color:#5c6478;text-align:right;line-height:1.2;font-variant-numeric:tabular-nums}
+.prev{font-size:11.5px;color:#5c6478;margin:2px 0 10px 0}
+.prev b{color:var(--steel);font-weight:600}
+.hint{font-size:12px;padding:8px 10px;border-radius:8px;margin-top:2px;
+background:rgba(255,138,61,.09);color:var(--signal);border:1px solid rgba(255,138,61,.22)}
+.hint.ok{background:rgba(74,222,128,.08);color:var(--good);border-color:rgba(74,222,128,.2)}
+.hint.est{background:rgba(90,169,230,.08);color:var(--steel);border-color:rgba(90,169,230,.22)}
+.exbtns{display:flex;gap:8px;margin-top:10px}
+.exbtns button{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--dim);
+font:inherit;font-size:12px;font-weight:650;padding:9px;border-radius:8px;cursor:pointer}
+canvas{width:100%;height:118px;display:block;margin-top:12px;border-radius:8px;background:#10131a}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.legend span{font-size:10px;color:#5c6478;display:flex;align-items:center;gap:4px}
+.legend i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.save{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:12px var(--pad) calc(12px + env(safe-area-inset-bottom));
+background:linear-gradient(to top,var(--ink) 62%,rgba(13,15,20,0))}
+.save button{width:100%;background:var(--signal);color:#160c04;border:0;border-radius:11px;padding:15px;
+font:inherit;font-weight:800;font-size:14px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 8px;text-align:center}
+.stat .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat .k{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.mrow{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:0}
+.mrow .mn{flex:0 0 88px;font-size:13px;font-weight:600}
+.mrow .mb{flex:1;height:8px;background:#10131a;border-radius:4px;overflow:hidden}
+.mrow .mb i{display:block;height:100%;background:var(--signal);border-radius:4px}
+.mrow .mv{flex:0 0 58px;text-align:right;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+.tools button{flex:1;min-width:105px;background:none;border:1px solid var(--line);color:var(--dim);
+font:inherit;font-size:12px;padding:11px;border-radius:9px;cursor:pointer}
+.warnbox{margin-top:14px;font-size:12px;color:#6b7488;line-height:1.55;border-left:2px solid var(--line);padding-left:12px}
+.warnbox b{color:#98a1b3}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--good);
+color:#07220f;padding:11px 20px;border-radius:30px;font-size:13px;font-weight:700;opacity:0;
+pointer-events:none;transition:.25s;z-index:40}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Bitá<span>cora</span></h1>
+    <div class="hb">
+      <div class="wk">Bloque <b id="blk">A</b> · Sem <b id="wknum">1</b>/9<br><span id="today"></span></div>
+      <button class="ubtn" id="ubtn">KG</button>
+    </div>
+  </div>
+  <nav id="nav"></nav>
+</header>
+<main id="main"></main>
+<div class="save" id="savebar"><button id="savebtn">Guardar sesión</button></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ============ MODELO ============
+   slot   = patrón de movimiento (agrupa variantes, suma volumen, comparte progresión)
+   variant= ejercicio concreto. type define cómo se interpreta el peso:
+     load    -> peso tal cual (barra, máquina, polea)
+     perSide -> peso por mancuerna (carga real = 2x)
+     bw      -> peso corporal (campo = lastre añadido; carga real = PC + lastre)
+     assist  -> máquina asistida (campo = ayuda; carga real = PC - ayuda)
+   factor = dificultad relativa dentro del slot (para estimar arranque al cambiar de variante)
+============================================ */
+const PROGRAM = {
+  lun: { name:"Upper", sub:"Fuerza",
+    warm:["Cardio ligero — 5 min","Dislocaciones con banda — 15","Gato-vaca torácico — 10","Rotación externa con banda — 15/lado"],
+    slots:[
+      {id:"lun_press_inc", m:"Pecho", sets:3, lo:5, hi:7, rest:"3-4 min", def:[0,1], v:[
+        {id:"inc_bb",   n:"Press inclinado con barra 45°", t:"bar",   bar:"std",    f:1.00, note:"Pausa 1s abajo con tensión en el pecho."},
+        {id:"inc_db",   n:"Press inclinado con mancuernas", t:"perSide", f:0.50, note:"Más rango que la barra. Peso POR mancuerna."},
+        {id:"inc_smith",n:"Press inclinado en Smith",       t:"bar",   bar:"smith",    f:1.05, note:"Recorrido guiado. Útil si el rack está ocupado."},
+        {id:"inc_mach", n:"Press inclinado en máquina",     t:"load",    f:1.15, note:"Cero estabilización. Empuja fuerte."},
+      ]},
+      {id:"lun_pow", m:"Potencia", sets:4, lo:3, hi:5, rest:"90s", tag:"pow", def:[0,1], v:[
+        {id:"push_exp", n:"Flexiones explosivas",  t:"bw", f:0.62, note:"Manos despegan del piso. Lastre = 0 si es puro corporal."},
+        {id:"push_clap",n:"Flexiones con palmada", t:"bw", f:0.65, note:"Progresión de la anterior."},
+      ]},
+      {id:"lun_fly", m:"Pecho", sets:3, lo:8, hi:12, rest:"90s", def:[0,1], v:[
+        {id:"pec_deck",    n:"Pec deck",                        t:"load",   f:1.00, note:"Estiramiento profundo, pausa 1s en la contracción."},
+        {id:"cross_ladder",n:"Cable crossover en escalera",     t:"load",   f:0.95, note:"Una serie polea baja, una media, una alta."},
+        {id:"fly_db",      n:"Aperturas con mancuerna en banco",t:"perSide",f:0.50, note:"Casi siempre libre. Peso POR mancuerna."},
+        {id:"fly_cable",   n:"Apertura en polea baja-alta",     t:"load",   f:0.90, note:"Cruza las manos en la contracción."},
+      ]},
+      {id:"lun_pull_v", m:"Espalda", sets:3, lo:5, hi:8, rest:"2-3 min", def:[0,0], v:[
+        {id:"pullup_w",     n:"Dominada agarre ancho",           t:"bw",    f:1.00, note:"Lastre = peso añadido (0 si es corporal)."},
+        {id:"pullup_assist",n:"Dominada en máquina asistida",    t:"assist",f:1.00, note:"El peso que metes es la AYUDA de la máquina. Úsala en las últimas series cuando ya no salen limpias."},
+        {id:"pulldown_w",   n:"Jalón agarre ancho",              t:"load",  f:0.85, note:"Si las barras están ocupadas."},
+      ]},
+      {id:"lun_press_v", m:"Hombro", sets:3, lo:6, hi:8, rest:"2-3 min", def:[0,1], v:[
+        {id:"ohp",      n:"Press militar con barra",     t:"bar",   bar:"std",   f:1.00, note:"Glúteo y abdomen apretados, sin arquear."},
+        {id:"ohp_smith",n:"Press de hombro en Smith",    t:"bar",   bar:"smith",   f:1.05, note:"Si la barra libre está ocupada."},
+        {id:"ohp_mach", n:"Press de hombro en máquina",  t:"load",   f:1.15, note:"Codos rompen los 90°."},
+        {id:"ohp_db",   n:"Press de hombro con mancuernas", t:"perSide", f:0.45, note:"Peso POR mancuerna."},
+      ]},
+      {id:"lun_row_h", m:"Espalda", sets:3, lo:6, hi:8, rest:"2-3 min", def:[0,1], v:[
+        {id:"row_chest",n:"Remo en máquina con apoyo de pecho", t:"load",   f:1.00, note:"Pecho apoyado: cero riesgo lumbar, cero técnica compleja."},
+        {id:"row_tbar", n:"Remo T-bar con apoyo de pecho",      t:"load",   f:1.00, note:"Rango completo, sin impulso."},
+        {id:"row_stack",n:"Remo sentado en máquina de placas (pin)", t:"load", f:1.00, note:"Torre de placas con pin: el número que marca la placa ES el peso. Sin cuentas."},
+        {id:"row_pend", n:"Remo Pendlay",                       t:"bar",   bar:"std",   f:0.90, note:"Técnico. Solo si te sientes cómodo con la bisagra."},
+        {id:"row_db",   n:"Remo con mancuerna a un brazo",      t:"perSide",f:0.50, note:"Peso POR mancuerna. Reps por lado."},
+      ]},
+      {id:"lun_tri", m:"Tríceps", sets:2, lo:8, hi:12, rest:"90s", def:[0,1], v:[
+        {id:"tri_oh_bar", n:"Extensión overhead en polea (barra)", t:"load",   f:1.00, note:"Pausa 0.5-1s en el estiramiento."},
+        {id:"tri_oh_rope",n:"Extensión overhead en polea (cuerda)",t:"load",   f:0.95, note:"Abre la cuerda en la contracción."},
+        {id:"tri_push",   n:"Extensión de tríceps en polea alta",  t:"load",   f:1.10, note:"Codos pegados al torso."},
+        {id:"tri_skull",  n:"Press francés con mancuernas",        t:"perSide",f:0.38, note:"Peso POR mancuerna. Codos fijos."},
+      ]},
+      {id:"lun_curl", m:"Bíceps", sets:2, lo:8, hi:12, rest:"90s", def:[0,1], v:[
+        {id:"curl_bay",   n:"Curl bayesiano en polea",       t:"load",   f:1.00, note:"Polea baja detrás de ti, tensión constante."},
+        {id:"curl_inc",   n:"Curl inclinado con mancuernas", t:"perSide",f:0.48, note:"Peso POR mancuerna. Máximo estiramiento."},
+        {id:"curl_ez_l",  n:"Curl con barra EZ",             t:"bar",   bar:"ez",   f:1.15, note:"Sin balanceo."},
+        {id:"curl_preach",n:"Curl predicador en máquina",    t:"load",   f:1.05, note:"Reps suaves y controladas."},
+      ]},
+    ],
+    fin:["Farmer's walk — 3 × 40 m pesado (agarre + core)"]
+  },
+
+  mar: { name:"Lower", sub:"Fuerza",
+    warm:["Bici o caminadora — 5 min","Sentadilla profunda con pausa — 5 × 20s","Movilidad 90/90 — 8/lado","Tobillo en pared — 10/lado"],
+    slots:[
+      {id:"mar_ham", m:"Isquios", sets:2, lo:8, hi:12, rest:"90s", def:[0,1], v:[
+        {id:"curl_lying",n:"Curl femoral tumbado", t:"load", f:1.00, note:"Cadera pegada al banco."},
+        {id:"curl_seat", n:"Curl femoral sentado",  t:"load", f:1.05, note:"Inclínate al frente para estirar más."},
+      ]},
+      {id:"mar_squat", m:"Cuádriceps", sets:3, lo:5, hi:7, rest:"3-4 min", def:[0,1], v:[
+        {id:"squat_bb",   n:"Sentadilla trasera",    t:"bar",   bar:"std", f:1.00, note:"Profundidad completa sin redondear lumbar."},
+        {id:"squat_smith",n:"Sentadilla en Smith",   t:"bar",   bar:"smith", f:1.10, note:"Pies 10cm adelante, torso vertical."},
+        {id:"hack_squat", n:"Sentadilla hack",       t:"load", f:1.20, note:"Control en la bajada."},
+        {id:"leg_press_s",n:"Prensa de piernas",     t:"load", f:2.00, note:"Si todo lo demás está ocupado."},
+      ]},
+      {id:"mar_pow", m:"Potencia", sets:4, lo:3, hi:3, rest:"90s", tag:"pow", def:[0,1], v:[
+        {id:"jump_v",    n:"Salto vertical máximo", t:"bw", f:1.00, note:"Aterrizaje suave. Lastre = 0."},
+        {id:"jump_broad",n:"Salto horizontal",      t:"bw", f:1.00, note:"Absorbe con la cadera."},
+      ]},
+      {id:"mar_hinge", m:"Isquios", sets:3, lo:6, hi:8, rest:"2-3 min", def:[0,1], v:[
+        {id:"rdl_bb",    n:"Peso muerto rumano con barra",  t:"bar",   bar:"std",   f:1.00, note:"Para al 75% del bloqueo."},
+        {id:"rdl_db",    n:"RDL con mancuernas",            t:"perSide",f:0.50, note:"Peso POR mancuerna."},
+        {id:"rdl_snatch",n:"RDL agarre ancho (snatch)",     t:"bar",   bar:"std",   f:0.90, note:"Más rango."},
+      ]},
+      {id:"mar_quad", m:"Cuádriceps", sets:3, lo:10, hi:15, rest:"90s", def:[0,1], v:[
+        {id:"leg_ext",  n:"Extensión de cuádriceps",         t:"load", f:1.00, note:"Negativa de 2-3s."},
+        {id:"leg_ext_1",n:"Extensión de cuádriceps a 1 pierna",t:"load",f:0.50, note:"Corrige desbalances. Empieza por la pierna débil."},
+        {id:"sissy",    n:"Sentadilla sissy",                t:"bw",   f:0.55, note:"Lastre = 0 si es corporal."},
+      ]},
+      {id:"mar_calf", m:"Gemelo", sets:3, lo:8, hi:12, rest:"90s", def:[0,1], v:[
+        {id:"calf_st",   n:"Elevación de talones de pie",   t:"load", f:1.00, note:"Pausa 1-2s abajo."},
+        {id:"calf_press",n:"Elevación de talones en prensa",t:"load", f:1.30, note:"Rango completo, sin rebote."},
+        {id:"calf_seat", n:"Elevación de talones sentado",  t:"load", f:0.80, note:"Enfoca el sóleo."},
+      ]},
+      {id:"mar_core", m:"Core", sets:2, lo:10, hi:15, rest:"90s", def:[0,1], v:[
+        {id:"cable_crunch",n:"Crunch en polea",   t:"load", f:1.00, note:"Redondea la lumbar al bajar."},
+        {id:"crunch_mach", n:"Crunch en máquina", t:"load", f:1.05, note:"Conexión mente-músculo."},
+      ]},
+    ],
+    fin:["Pallof press con banda — 3 × 10/lado","Plancha lateral — 3 × 30s/lado"]
+  },
+
+  mie: { rest:true, name:"Descanso", sub:"Recuperación",
+    tips:["Caminata suave 20-30 min si quieres.","Movilidad ligera.","Come y duerme. Aquí es donde crece el músculo."] },
+
+  jue: { name:"Pull", sub:"Hipertrofia + Antebrazo",
+    warm:["Cardio ligero — 5 min","Colgado pasivo — 2 × 30s","Activación escapular — 10","Rotación externa con banda — 15/lado"],
+    slots:[
+      {id:"jue_pull_v", m:"Espalda", sets:3, lo:8, hi:12, rest:"2-3 min", def:[0,1], v:[
+        {id:"pulldown_n",    n:"Jalón al pecho agarre neutro",  t:"load",  f:1.00, note:"Codos abajo y atrás."},
+        {id:"pullup_n",      n:"Dominada agarre neutro",        t:"bw",    f:1.18, note:"Lastre = peso añadido (0 si es corporal)."},
+        {id:"pullup_assist2",n:"Dominada en máquina asistida",  t:"assist",f:1.18, note:"El peso que metes es la AYUDA. Ideal para las últimas series."},
+      ]},
+      {id:"jue_pow", m:"Potencia", sets:4, lo:3, hi:5, rest:"90s", tag:"pow", def:[0,1], v:[
+        {id:"pullup_exp",  n:"Dominadas explosivas", t:"bw",   f:1.00, note:"Tira rápido. Lastre = 0."},
+        {id:"pulldown_exp",n:"Jalón explosivo",      t:"load", f:0.85, note:"Tirón rápido, negativa lenta."},
+      ]},
+      {id:"jue_row_h", m:"Espalda", sets:3, lo:8, hi:12, rest:"2-3 min", def:[0,1], v:[
+        {id:"row_chest2",n:"Remo en máquina con apoyo de pecho", t:"load",   f:1.00, note:"Codos a 45°, aprieta escápulas."},
+        {id:"row_tbar2", n:"Remo T-bar con apoyo de pecho",      t:"load",   f:1.00, note:"Sin impulso."},
+        {id:"row_db2",   n:"Remo con mancuerna a un brazo",      t:"perSide",f:0.50, note:"Peso POR mancuerna."},
+      ]},
+      {id:"jue_row_c", m:"Espalda", sets:3, lo:10, hi:15, rest:"2 min", def:[0,1], v:[
+        {id:"row_cable",n:"Remo en polea sentado agarre neutro", t:"load",   f:1.00, note:"Codos abajo y atrás."},
+        {id:"row_cable1",n:"Remo en polea a un brazo",           t:"load",   f:0.55, note:"Rango extra, rotación del torso."},
+      ]},
+      {id:"jue_rear", m:"Hombro", sets:3, lo:12, hi:15, rest:"90s", def:[0,1], v:[
+        {id:"rear_cable",n:"Vuelo posterior en polea a un brazo", t:"load",   f:1.00, note:"Pausa 1-2s en la contracción."},
+        {id:"rear_pec",  n:"Pec deck invertido",                 t:"load",   f:1.10, note:"Aprieta duro el deltoide posterior."},
+        {id:"rear_db",   n:"Vuelo posterior con mancuernas",     t:"perSide",f:0.50, note:"Peso POR mancuerna."},
+      ]},
+      {id:"jue_shrug", m:"Espalda", sets:2, lo:12, hi:15, rest:"90s", def:[0,1], v:[
+        {id:"shrug_m", n:"Encogimientos en máquina",    t:"load",   f:1.00, note:"Pausa arriba."},
+        {id:"shrug_db",n:"Encogimientos con mancuernas",t:"perSide",f:0.50, note:"Peso POR mancuerna."},
+      ]},
+      {id:"jue_curl", m:"Bíceps", sets:3, lo:8, hi:12, rest:"90s", def:[0,1], v:[
+        {id:"curl_ez",     n:"Curl con barra EZ",          t:"bar",   bar:"ez",   f:1.00, note:"Sin balanceo."},
+        {id:"curl_preach2",n:"Curl predicador en máquina", t:"load",   f:0.92, note:"Reps controladas."},
+        {id:"curl_db",     n:"Curl con mancuernas",        t:"perSide",f:0.42, note:"Peso POR mancuerna."},
+      ]},
+      {id:"jue_fore1", m:"Antebrazo", sets:2, lo:12, hi:15, rest:"60s", tag:"fore", def:[0,1], v:[
+        {id:"curl_rev",n:"Curl inverso con barra EZ",   t:"bar",   bar:"ez",   f:1.00, note:"ANTEBRAZO. Agarre prono. Braquiorradial + extensores."},
+        {id:"curl_ham",n:"Curl martillo con mancuernas",t:"perSide",f:0.55, note:"ANTEBRAZO. Peso POR mancuerna."},
+      ]},
+      {id:"jue_fore2", m:"Antebrazo", sets:3, lo:15, hi:20, rest:"60s", tag:"fore", def:[0,1], v:[
+        {id:"wrist_curl", n:"Curl de muñeca con barra", t:"bar",   bar:"ez", f:1.00, note:"ANTEBRAZO. Antebrazos en el banco, solo mueve la muñeca."},
+        {id:"wrist_cable",n:"Curl de muñeca en polea",  t:"load", f:0.95, note:"ANTEBRAZO. Tensión constante."},
+      ]},
+    ],
+    fin:["Parada de manos contra pared — 4 × 20-40s","Colgado activo — 3 × máximo tiempo (agarre)"]
+  },
+
+  vie: { name:"Push", sub:"Hipertrofia",
+    warm:["Cardio ligero — 5 min","Dislocaciones con banda — 15","Movilidad torácica — 10","Rotación externa — 15/lado"],
+    slots:[
+      {id:"vie_press_h", m:"Pecho", sets:3, lo:8, hi:12, rest:"2-3 min", def:[0,1], v:[
+        {id:"bench_bb",  n:"Press de banca con barra",    t:"bar",   bar:"std",   f:1.00, note:"Pausa breve en el pecho."},
+        {id:"bench_mach",n:"Press de pecho en máquina",   t:"load",   f:1.15, note:"Rango completo."},
+        {id:"bench_db",  n:"Press de banca con mancuernas",t:"perSide",f:0.48, note:"Peso POR mancuerna."},
+        {id:"bench_smith",n:"Press de banca en Smith",    t:"bar",   bar:"smith",   f:1.05, note:"Si el rack está ocupado."},
+      ]},
+      {id:"vie_pow", m:"Potencia", sets:4, lo:4, hi:6, rest:"90s", tag:"pow", def:[0,1], v:[
+        {id:"push_exp2",  n:"Flexiones explosivas",             t:"bw",  f:0.62, note:"Lastre = 0."},
+        {id:"bench_speed",n:"Press de banca a velocidad (50%)", t:"bar",   bar:"std",f:0.50, note:"Barra rápida. Registra el peso."},
+      ]},
+      {id:"vie_press_v", m:"Hombro", sets:3, lo:10, hi:12, rest:"2 min", def:[0,1], v:[
+        {id:"ohp_mach2", n:"Press de hombro en máquina",     t:"load",   f:1.00, note:"Codos rompen los 90°."},
+        {id:"ohp_cable", n:"Press de hombro en polea",       t:"load",   f:0.90, note:"Tensión constante."},
+        {id:"ohp_db2",   n:"Press de hombro con mancuernas", t:"perSide",f:0.42, note:"Peso POR mancuerna."},
+      ]},
+      {id:"vie_fly", m:"Pecho", sets:3, lo:12, hi:15, rest:"90s", def:[0,1], v:[
+        {id:"fly_db_half",n:"Apertura con mancuerna (mitad baja)", t:"perSide",f:0.50, note:"Peso POR mancuerna. Todo el trabajo abajo."},
+        {id:"fly_cable2", n:"Apertura en polea de baja a alta",    t:"load",   f:0.90, note:"Cruza las manos arriba."},
+        {id:"pec_deck2",  n:"Pec deck",                            t:"load",   f:1.00, note:"Si no hay mancuernas libres."},
+      ]},
+      {id:"vie_lat", m:"Hombro", sets:3, lo:12, hi:20, rest:"60s", def:[0,1], v:[
+        {id:"lat_cable",  n:"Elevación lateral en polea alta",   t:"load",   f:1.00, note:"Deja el ego afuera."},
+        {id:"lat_db_lean",n:"Elevación lateral inclinado",       t:"perSide",f:0.50, note:"Peso POR mancuerna. Agárrate de un poste."},
+        {id:"lat_mach",   n:"Elevación lateral en máquina",      t:"load",   f:1.10, note:"Tensión constante."},
+      ]},
+      {id:"vie_tri", m:"Tríceps", sets:3, lo:10, hi:15, rest:"90s", def:[0,1], v:[
+        {id:"tri_oh2",  n:"Extensión overhead en polea", t:"load",   f:1.00, note:"Pausa en el estiramiento."},
+        {id:"tri_skull2",n:"Press francés con mancuernas",t:"perSide",f:0.38, note:"Peso POR mancuerna."},
+        {id:"tri_push2", n:"Extensión en polea alta",     t:"load",   f:1.10, note:"Codos pegados."},
+      ]},
+      {id:"vie_tri2", m:"Tríceps", sets:2, lo:12, hi:15, rest:"60s", def:[0,1], v:[
+        {id:"tri_kick",n:"Patada de tríceps en polea", t:"load",f:1.00, note:"Hombro atrás del torso."},
+        {id:"tri_dip", n:"Fondos entre bancos",        t:"bw",  f:0.60, note:"Lastre = peso añadido."},
+      ]},
+      {id:"vie_core", m:"Core", sets:3, lo:10, hi:20, rest:"90s", def:[0,1], v:[
+        {id:"leg_raise",n:"Elevación de piernas en silla romana", t:"bw", f:0.45, note:"Lastre = 0. Redondea la lumbar al subir."},
+        {id:"leg_hang", n:"Elevación de piernas colgado",         t:"bw", f:0.50, note:"Sin balanceo."},
+      ]},
+    ],
+    fin:["Zona 2: 18 min (bici, caminadora inclinada o elíptica)"]
+  },
+
+  sab: { name:"Legs", sub:"Hipertrofia",
+    warm:["Bici — 5 min","Sentadilla profunda con pausa — 5 × 20s","Movilidad 90/90 — 8/lado","Tobillo — 10/lado"],
+    slots:[
+      {id:"sab_press", m:"Cuádriceps", sets:3, lo:10, hi:15, rest:"2-3 min", def:[0,1], v:[
+        {id:"leg_press",n:"Prensa de piernas", t:"load", f:1.00, note:"Pies abajo para más cuádriceps."},
+        {id:"hack_sq2", n:"Sentadilla hack",   t:"load", f:0.60, note:"Profundidad completa."},
+      ]},
+      {id:"sab_ham", m:"Isquios", sets:3, lo:10, hi:15, rest:"90s", def:[0,1], v:[
+        {id:"curl_seat2", n:"Curl femoral sentado", t:"load", f:1.00, note:"Inclínate al frente."},
+        {id:"curl_lying2",n:"Curl femoral tumbado", t:"load", f:0.95, note:"Cadera pegada al banco."},
+      ]},
+      {id:"sab_uni", m:"Cuádriceps", sets:3, lo:8, hi:12, rest:"2 min", def:[0,1], v:[
+        {id:"bulgarian",n:"Sentadilla búlgara con mancuernas", t:"perSide",f:0.50, note:"Peso POR mancuerna. Reps por pierna."},
+        {id:"step_up",  n:"Step-up con mancuernas",            t:"perSide",f:0.50, note:"Peso POR mancuerna. Empuja con el talón."},
+        {id:"lunge_w",  n:"Zancadas caminando con mancuernas", t:"perSide",f:0.50, note:"Peso POR mancuerna."},
+      ]},
+      {id:"sab_quad", m:"Cuádriceps", sets:3, lo:12, hi:15, rest:"90s", def:[0,1], v:[
+        {id:"leg_ext2", n:"Extensión de cuádriceps",           t:"load",f:1.00, note:"Negativa de 2-3s."},
+        {id:"leg_ext_12",n:"Extensión de cuádriceps a 1 pierna",t:"load",f:0.50, note:"Empieza por la pierna débil."},
+      ]},
+      {id:"sab_add", m:"Glúteo", sets:2, lo:15, hi:20, rest:"60s", def:[0,1], v:[
+        {id:"adduct",      n:"Aductor en máquina",         t:"load",f:1.00, note:"Cara interna del muslo."},
+        {id:"adduct_cable",n:"Aducción de cadera en polea",t:"load",f:0.60, note:"Rango completo."},
+      ]},
+      {id:"sab_abd", m:"Glúteo", sets:2, lo:15, hi:20, rest:"60s", def:[0,1], v:[
+        {id:"abduct",      n:"Abductor en máquina",         t:"load",f:1.00, note:"Inclínate al frente."},
+        {id:"abduct_cable",n:"Abducción de cadera en polea",t:"load",f:0.60, note:"Aprieta el glúteo arriba."},
+      ]},
+      {id:"sab_calf", m:"Gemelo", sets:3, lo:12, hi:15, rest:"90s", def:[0,1], v:[
+        {id:"calf2",     n:"Elevación de talones de pie",   t:"load",f:1.00, note:"Rango completo, pausa abajo."},
+        {id:"calf_seat2",n:"Elevación de talones sentado",  t:"load",f:0.80, note:"Enfoca el sóleo."},
+      ]},
+    ],
+    fin:["Zona 2: 20 min en bici o remo (bajo impacto)"]
+  },
+
+  dom: { rest:true, name:"Descanso", sub:"Recuperación",
+    tips:["Caminata larga si te provoca.","Movilidad suave, nada de cargar.","Prepara la comida de la semana."] },
+};
+
+const CYCLE = [
+  {n:1, phase:"Reintroducción",  rpe:"6-7",  setMod:-1, failure:false, tech:null,
+   note:"Vuelves al gym. Deja 3-4 reps en el tanque en TODAS las series. Se siente fácil a propósito."},
+  {n:2, phase:"Reintroducción",  rpe:"7",    setMod:0,  failure:false, tech:null,
+   note:"Series completas, todavía sin fallo. Deja 2-3 reps en el tanque."},
+  {n:3, phase:"Acumulación",     rpe:"7-8",  setMod:0,  failure:true,  tech:null,
+   note:"Arranca de verdad. Última serie de cada ejercicio al fallo."},
+  {n:4, phase:"Acumulación",     rpe:"8-9",  setMod:0,  failure:true,  tech:null,
+   note:"Última serie al fallo. Empuja donde la app te marque en naranja."},
+  {n:5, phase:"Acumulación",     rpe:"8-9",  setMod:1,  failure:true,  tech:null,
+   note:"Serie extra en cada ejercicio. Cuida el sueño."},
+  {n:6, phase:"Intensificación", rpe:"9-10", setMod:1,  failure:true,  tech:"Myo-reps en el último ejercicio de cada grupo",
+   note:"Myo-reps: fallo, 15s de descanso, 3-5 reps más, repite 3 veces."},
+  {n:7, phase:"Intensificación", rpe:"9-10", setMod:1,  failure:true,  tech:"Rest-pause en los aislamientos",
+   note:"Rest-pause: fallo, 20s, exprime lo que salga, repite una vez."},
+  {n:8, phase:"Pico",            rpe:"10",   setMod:1,  failure:true,  tech:"Myo-reps + parciales al final",
+   note:"Semana más dura del bloque. Después viene la descarga."},
+  {n:9, phase:"Descarga",        rpe:"5-6",  setMod:-2, failure:false, tech:null,
+   note:"DESCARGA. Mitad del volumen, ~60% del peso. Nada de fallo. No es opcional."},
+];
+
+const DAYS=["lun","mar","mie","jue","vie","sab","dom"];
+const LABEL={lun:"Lun",mar:"Mar",mie:"Mié",jue:"Jue",vie:"Vie",sab:"Sáb",dom:"Dom"};
+const PC={"Reintroducción":"p-intro","Acumulación":"p-accum","Intensificación":"p-intens","Pico":"p-intens","Descarga":"p-deload"};
+const VC=["#ff8a3d","#5aa9e6","#a78bfa","#4ade80"];
+const LB=2.2046226;
+
+/* ===== SEMILLA: tu sesión del lunes 13/07, ya migrada ===== */
+const SEED={"log": {"2026-07-13": {"lun_press_inc::inc_bb": {"sets": [{"w": 5, "r": 7}, {"w": 7.5, "r": 8}]}, "lun_pow::push_exp": {"sets": [{"w": 0, "r": 8}, {"w": 0, "r": 8}, {"w": 0, "r": 8}]}, "lun_fly::cross_ladder": {"sets": [{"w": 23, "r": 7}, {"w": 41, "r": 7}]}, "lun_pull_v::pullup_w": {"sets": [{"w": 0, "r": 5}, {"w": 0, "r": 5}]}, "lun_row_h::row_stack": {"sets": [{"w": 23, "r": 10}, {"w": 27, "r": 8}]}, "lun_tri::tri_oh_bar": {"sets": [{"w": 23, "r": 8}]}, "lun_curl::curl_bay": {"sets": [{"w": 14, "r": 8}]}, "lun_press_v::ohp": {"sets": [{"w": 5, "r": 8}, {"w": 5, "r": 8}]}}}, "start": "2026-07-12", "bw": 85, "unit": "kg", "pick": {"lun_row_h": "row_stack"}, "mode": {"lun_row_h::row_stack": "stack"}, "bars": {"std": 20, "ez": 10, "smith": 15}, "fixedRow": 2};
+
+/* ===== ALMACENAMIENTO LOCAL ===== */
+const KEY="bitacora_v3";
+let DB={log:{},start:null,bw:85,unit:"kg",pick:{},mode:{},bars:{std:20,ez:10,smith:15}};
+let memoryOnly=false, seeded=false;
+
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw) DB=Object.assign(DB,JSON.parse(raw));
+    else {
+      migrate();
+      if(!Object.keys(DB.log).length){ DB=Object.assign(DB,JSON.parse(JSON.stringify(SEED))); seeded=true; }
+    }
+    localStorage.setItem("__t","1"); localStorage.removeItem("__t");
+  }catch(e){ memoryOnly=true; }
+  if(!DB.start) DB.start=todayISO();
+  if(!DB.bw) DB.bw=85;
+  if(!DB.pick) DB.pick={};
+  if(!DB.mode) DB.mode={};
+  if(!DB.bars) DB.bars={std:20,ez:10,smith:15};
+  fixRowPend();
+  persist();
+}
+/* Migración desde v2/v1: claves eran solo el id de ejercicio */
+function migrate(){
+  let old=null;
+  try{ old=localStorage.getItem("bitacora_v2")||localStorage.getItem("bitacora_v1"); }catch(e){}
+  if(!old) return;
+  try{
+    const o=JSON.parse(old);
+    DB.start=o.start||todayISO();
+    DB.log={};
+    for(const date in o.log){
+      DB.log[date]={};
+      for(const vid in o.log[date]){
+        const s=slotOfVariant(vid);
+        DB.log[date][s?`${s.id}::${vid}`:vid]=o.log[date][vid];
+      }
+    }
+  }catch(e){}
+}
+function slotOfVariant(vid){
+  for(const d of DAYS){ const p=PROGRAM[d]; if(!p.slots) continue;
+    for(const s of p.slots) if(s.v.some(v=>v.id===vid)) return s; }
+  return null;
+}
+
+/* Arreglo puntual: lo registrado como "row_pend" fue la máquina de placas con pin (stack) */
+function fixRowPend(){
+  if(DB.fixedRow===2) return;
+  for(const d in DB.log){
+    const from=["lun_row_h::row_pend","lun_row_h::row_plate"];
+    from.forEach(k=>{ if(DB.log[d][k]){ DB.log[d]["lun_row_h::row_stack"]=DB.log[d][k]; delete DB.log[d][k]; } });
+  }
+  delete DB.mode["lun_row_h::row_plate"];
+  DB.mode["lun_row_h::row_stack"]="stack";
+  DB.pick["lun_row_h"]="row_stack";
+  DB.fixedRow=2;
+}
+function persist(){ try{ localStorage.setItem(KEY,JSON.stringify(DB)); }catch(e){ memoryOnly=true; } }
+function todayISO(){ const d=new Date(); return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); }
+function absWeek(){ return Math.max(1,Math.floor((new Date(todayISO())-new Date(DB.start))/(7*864e5))+1); }
+function cycleWeek(){ return ((absWeek()-1)%CYCLE.length)+1; }
+function blockIdx(){ return Math.floor((absWeek()-1)/CYCLE.length)%2; }
+function phase(){ return CYCLE[cycleWeek()-1]; }
+
+/* ===== CARGA EFECTIVA — la clave de todo ===== */
+const MODES={
+  stack:  {n:"Placa / número de la máquina", h:"Metes el número que marca la placa."},
+  plate:  {n:"Discos por lado",              h:"Metes el peso de UN lado. La app suma los dos."},
+  bar:    {n:"Barra + discos por lado",      h:"Metes el peso de UN lado. La app suma los dos lados + la barra."},
+  perSide:{n:"Mancuernas (peso de una)",     h:"Metes el peso de UNA mancuerna. La app dobla la carga."},
+};
+function modeOf(slot,v){ return DB.mode[key(slot,v.id)] || (v.t==="load"?"stack":v.t); }
+function barKg(v){ return DB.bars[v.bar||"std"] || 20; }
+/* carga efectiva REAL en kg, según el modo de carga */
+function eff(v,w,mode){
+  w=Number(w)||0;
+  const m = mode || v.t;
+  if(m==="bw")      return DB.bw + w;
+  if(m==="assist")  return Math.max(0, DB.bw - w);
+  if(m==="perSide") return w*2;
+  if(m==="plate")   return w*2;
+  if(m==="bar")     return w*2 + barKg(v);
+  return w;                       // stack / load
+}
+function effS(slot,v,w){ return eff(v,w,modeOf(slot,v)); }
+function fmtW(kg){
+  kg=Number(kg)||0;
+  const k=Math.round(kg*10)/10, l=Math.round(kg*LB);
+  return `${k}kg / ${l}lb`;
+}
+/* peso que el usuario TECLEA -> kg reales del campo (unidad de la sede) */
+function toKg(x){ return DB.unit==="lb" ? (Number(x)||0)/LB : (Number(x)||0); }
+function fromKg(kg){ return DB.unit==="lb" ? Math.round(kg*LB*2)/2 : Math.round(kg*2)/2; }
+
+function key(slot,vid){ return slot.id+"::"+vid; }
+function chosen(slot){
+  const p=DB.pick[slot.id];
+  if(p){ const i=slot.v.findIndex(v=>v.id===p); if(i>=0) return slot.v[i]; }
+  return slot.v[slot.def[blockIdx()] ?? 0];
+}
+function setsOf(slot){ return Math.max(1, slot.sets + phase().setMod); }
+function hist(slot,vid){
+  const k=key(slot,vid), out=[];
+  Object.keys(DB.log).sort().forEach(d=>{
+    const e=DB.log[d][k];
+    if(e&&e.sets&&e.sets.some(s=>s.r)) out.push({date:d,sets:e.sets});
+  });
+  return out;
+}
+/* historial de TODO el slot (todas las variantes), para volumen y gráfica unificada */
+function histSlot(slot){
+  const out=[];
+  Object.keys(DB.log).sort().forEach(d=>{
+    slot.v.forEach(v=>{
+      const e=DB.log[d][key(slot,v.id)];
+      if(e&&e.sets&&e.sets.some(s=>s.r))
+        out.push({date:d,v:v,sets:e.sets,vol:e.sets.reduce((a,s)=>a+effS(slot,v,s.w)*(Number(s.r)||0),0)});
+    });
+  });
+  return out;
+}
+function slotById(id){ for(const d of DAYS){const p=PROGRAM[d]; if(!p.slots)continue;
+  const s=p.slots.find(x=>x.id===id); if(s) return s;} return null; }
+
+let day=DAYS[(new Date().getDay()+6)%7];
+let draft={};
+const main=document.getElementById("main"), nav=document.getElementById("nav"), savebar=document.getElementById("savebar");
+
+document.getElementById("ubtn").onclick=()=>{
+  DB.unit = DB.unit==="kg" ? "lb" : "kg";
+  persist(); draft={}; renderU(); render();
+  toast("Ingresando en "+DB.unit.toUpperCase());
+};
+function renderU(){ document.getElementById("ubtn").textContent=DB.unit.toUpperCase();
+  document.getElementById("ubtn").className="ubtn"+(DB.unit==="lb"?" on":""); }
+
+function renderNav(){
+  nav.innerHTML=DAYS.map(d=>`<button data-d="${d}" class="${d===day?"on":""} ${PROGRAM[d].rest?"rest":""}">${LABEL[d]}</button>`).join("")
+    +`<button data-d="sum" class="sum ${day==="sum"?"on":""}">Resumen</button>`;
+  nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{day=b.dataset.d;draft={};renderNav();render();scrollTo(0,0);});
+}
+function phaseHTML(){
+  const ph=phase(),cw=cycleWeek();
+  const bar=CYCLE.map(c=>`<i class="${c.n===cw?"now":c.phase==="Descarga"?"dl":c.n<cw?"done":""}"></i>`).join("");
+  return `<div class="phase ${PC[ph.phase]}"><div class="top"><div class="ttl">${ph.phase}</div>
+    <div class="pill">RPE ${ph.rpe} · ${ph.failure?"última al fallo":"sin fallo"}</div></div>
+    <p>${ph.note}</p>${ph.tech?`<div class="tech">Técnica: ${ph.tech}</div>`:""}
+    <div class="bar">${bar}</div></div>`;
+}
+
+/* ===== RESUMEN: volumen por grupo muscular (suma TODAS las variantes) ===== */
+function renderSummary(){
+  savebar.style.display="none";
+  const wkStart=new Date(new Date(todayISO())-((new Date().getDay()+6)%7)*864e5).toISOString().slice(0,10);
+  const mus={}, tot={};
+  DAYS.forEach(d=>{ const p=PROGRAM[d]; if(!p.slots)return;
+    p.slots.forEach(s=>{ if(s.m==="Potencia")return; tot[s.m]=(tot[s.m]||0)+setsOf(s); }); });
+  Object.keys(DB.log).filter(d=>d>=wkStart).forEach(d=>{
+    for(const k in DB.log[d]){
+      const [sid,vid]=k.split("::"); const s=slotById(sid); if(!s||s.m==="Potencia") continue;
+      const v=s.v.find(x=>x.id===vid); if(!v) continue;
+      const e=DB.log[d][k], done=e.sets.filter(x=>x.r).length;
+      mus[s.m]=mus[s.m]||{sets:0,vol:0};
+      mus[s.m].sets+=done;
+      mus[s.m].vol+=e.sets.reduce((a,x)=>a+effS(s,v,x.w)*(Number(x.r)||0),0);
+    }
+  });
+  const keys=Object.keys(tot).sort();
+  const mx=Math.max(1,...keys.map(m=>tot[m]));
+  const volTot=Object.values(mus).reduce((a,x)=>a+x.vol,0);
+  main.innerHTML=phaseHTML()+`
+  <div class="stats">
+    <div class="stat"><div class="v num">${Object.values(mus).reduce((a,x)=>a+x.sets,0)}</div><div class="k">Series esta sem</div></div>
+    <div class="stat"><div class="v num">${Math.round(volTot/1000)}k</div><div class="k">Volumen (kg)</div></div>
+    <div class="stat"><div class="v num">${Object.keys(DB.log).length}</div><div class="k">Sesiones</div></div>
+  </div>
+  <div class="block"><h3>Series por músculo — esta semana</h3>
+  ${keys.map(m=>{const d=mus[m]||{sets:0,vol:0};
+    return `<div class="mrow"><div class="mn">${m}</div>
+    <div class="mb"><i style="width:${Math.min(100,d.sets/mx*100)}%"></i></div>
+    <div class="mv">${d.sets}/${tot[m]}</div></div>`;}).join("")}
+  </div>
+  <div class="warnbox">El volumen suma <b>todas las variantes</b> de cada slot: si cambiaste pec deck por
+  aperturas con mancuerna, esas series igual cuentan para Pecho. La carga se calcula con la
+  <b>carga efectiva</b> (mancuernas ×2, corporal = tu peso, asistida = tu peso − ayuda), no con el número
+  suelto de la máquina.</div>`+toolsHTML();
+  bindTools();
+}
+
+function render(){
+  renderU();
+  document.getElementById("wknum").textContent=cycleWeek();
+  document.getElementById("blk").textContent=blockIdx()?"B":"A";
+  if(day==="sum"){ document.getElementById("today").textContent="Resumen"; return renderSummary(); }
+
+  const p=PROGRAM[day];
+  document.getElementById("today").textContent=p.name+(p.sub?" · "+p.sub:"");
+  if(p.rest){
+    savebar.style.display="none";
+    main.innerHTML=phaseHTML()+`<div class="block"><h3>Descanso</h3>
+      <ul>${p.tips.map(t=>`<li>${t}</li>`).join("")}</ul></div>`+toolsHTML();
+    return bindTools();
+  }
+  savebar.style.display="block";
+  const dayLog=DB.log[todayISO()]||{};
+
+  main.innerHTML=phaseHTML()+`
+    <div class="stats">
+      <div class="stat"><div class="v num">${p.slots.length}</div><div class="k">Ejercicios</div></div>
+      <div class="stat"><div class="v num">${p.slots.reduce((a,s)=>a+setsOf(s),0)}</div><div class="k">Series</div></div>
+      <div class="stat"><div class="v num">${DB.bw}<span style="font-size:12px">kg</span></div><div class="k">Peso corporal</div></div>
+    </div>
+    <div class="block"><h3>Movilidad <span class="tag t-mov">antes</span></h3>
+      <ul>${p.warm.map(w=>`<li>${w}</li>`).join("")}</ul></div>
+    <div class="block" id="exblock"></div>
+    <div class="block"><h3>Finisher <span class="tag t-fin">al cierre</span></h3>
+      <ul>${p.fin.map(f=>`<li>${f}</li>`).join("")}</ul></div>`+toolsHTML();
+
+  const eb=document.getElementById("exblock");
+  eb.innerHTML=p.slots.map(s=>slotHTML(s,dayLog)).join("");
+
+  eb.querySelectorAll(".ex-head").forEach(h=>h.onclick=e=>{
+    if(e.target.tagName==="SELECT") return;
+    const ex=h.parentElement; ex.classList.toggle("open");
+    if(ex.classList.contains("open")) drawChart(ex.dataset.slot);
+  });
+  eb.querySelectorAll("select.mode").forEach(sel=>sel.onchange=()=>{
+    const s=slotById(sel.dataset.slot);
+    DB.mode[key(s,chosen(s).id)]=sel.value; persist();
+    render();
+    const el=document.querySelector(`.ex[data-slot="${sel.dataset.slot}"]`);
+    if(el){ el.classList.add("open"); drawChart(sel.dataset.slot); el.scrollIntoView({block:"center"}); }
+    toast("Modo de carga: "+MODES[sel.value].n);
+  });
+  eb.querySelectorAll("select.var:not(.mode)").forEach(sel=>sel.onchange=()=>{
+    DB.pick[sel.dataset.slot]=sel.value; persist();
+    delete draft[sel.dataset.slot]; render();
+    const el=document.querySelector(`.ex[data-slot="${sel.dataset.slot}"]`);
+    if(el){ el.classList.add("open"); drawChart(sel.dataset.slot); el.scrollIntoView({block:"center"}); }
+  });
+  eb.querySelectorAll("input").forEach(i=>i.oninput=()=>{
+    const {slot,idx,f}=i.dataset;
+    draft[slot]=draft[slot]||{sets:[]};
+    draft[slot].sets[idx]=draft[slot].sets[idx]||{};
+    draft[slot].sets[idx][f]=i.value;
+    updateRow(slot,idx); updateCue(slot);
+  });
+  eb.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>{
+    const s=slotById(b.dataset.copy), v=chosen(s), h=hist(s,v.id);
+    if(!h.length){ toast("Sin sesiones previas con esta variante"); return; }
+    const last=h[h.length-1].sets;
+    document.querySelectorAll(`input[data-slot="${s.id}"]`).forEach(inp=>{
+      const st=last[inp.dataset.idx]; if(!st) return;
+      inp.value = inp.dataset.f==="w" ? fromKg(st.w) : st.r;
+      inp.dispatchEvent(new Event("input"));
+    });
+    toast("Copiado de la última vez");
+  });
+  p.slots.forEach(s=>{ updateCue(s.id); for(let i=0;i<setsOf(s);i++) updateRow(s.id,i); });
+}
+
+function slotHTML(slot,dayLog){
+  const v=chosen(slot), n=setsOf(slot), saved=dayLog[key(slot,v.id)];
+  const h=hist(slot,v.id), last=h.length?h[h.length-1]:null;
+  const isAlt = v.id !== slot.v[slot.def[blockIdx()]??0].id;
+
+  const prev = last
+    ? `Última (${fmt(last.date)}): <b>${last.sets.filter(s=>s.r).map(s=>`${fromKg(s.w)}${DB.unit} × ${s.r}`).join(" · ")}</b>`
+    : `Sin registro en esta variante.`;
+
+  const mo=modeOf(slot,v);
+  const ph2 = mo==="assist"?"ayuda" : mo==="bw"?"lastre" :
+              (mo==="bar"||mo==="plate")?"por lado" : mo==="perSide"?"c/mancuerna" : DB.unit;
+  let rows="";
+  for(let i=0;i<n;i++){
+    const s=(saved&&saved.sets[i])||{};
+    rows+=`<div class="setrow">
+      <div class="lbl ${i===n-1&&phase().failure?"last":""}">${i+1}</div>
+      <input type="number" inputmode="decimal" step="0.5" placeholder="${ph2}"
+        data-slot="${slot.id}" data-idx="${i}" data-f="w" value="${s.w!=null?fromKg(s.w):""}">
+      <div class="x">×</div>
+      <input type="number" inputmode="numeric" placeholder="reps"
+        data-slot="${slot.id}" data-idx="${i}" data-f="r" value="${s.r??""}">
+      <div class="eff" id="eff-${slot.id}-${i}"></div></div>`;
+  }
+  const range=slot.lo===slot.hi?slot.lo:`${slot.lo}-${slot.hi}`;
+  let tg="";
+  if(slot.tag==="pow") tg=` <span class="tag t-pow">potencia</span>`;
+  if(slot.tag==="fore") tg=` <span class="tag t-fore">antebrazo</span>`;
+  if(isAlt) tg+=` <span class="tag t-alt">alterno</span>`;
+
+  const opts=slot.v.map(x=>`<option value="${x.id}" ${x.id===v.id?"selected":""}>${x.n}</option>`).join("");
+  const canMode = !["bw","assist"].includes(v.t);
+  const mopts = canMode ? Object.keys(MODES).map(k=>
+      `<option value="${k}" ${k===mo?"selected":""}>${MODES[k].n}</option>`).join("") : "";
+  const tHelp = mo==="bw"     ? `Campo = lastre. Carga real = ${DB.bw}kg + lastre.`
+              : mo==="assist" ? `Campo = AYUDA de la máquina. Carga real = ${DB.bw}kg − ayuda.`
+              : mo==="bar"    ? `${MODES.bar.h} Barra = ${barKg(v)}kg.`
+              : MODES[mo] ? MODES[mo].h : "";
+
+  return `<div class="ex" data-slot="${slot.id}">
+    <div class="ex-head">
+      <div class="cue" id="cue-${slot.id}"></div>
+      <div class="ex-name"><div class="n">${v.n}${tg}</div>
+        <div class="m num">${n} × ${range} reps · ${slot.rest} · ${slot.m}</div></div>
+      <div class="chev">▶</div>
+    </div>
+    <div class="ex-body">
+      <select class="var" data-slot="${slot.id}">${opts}</select>
+      ${canMode?`<select class="var mode" data-slot="${slot.id}">${mopts}</select>`:""}
+      <div class="prev">${prev}</div>
+      ${rows}
+      <div id="hint-${slot.id}"></div>
+      <div class="exbtns"><button data-copy="${slot.id}">Repetir última</button></div>
+      <canvas id="ch-${slot.id}"></canvas>
+      <div class="legend" id="lg-${slot.id}"></div>
+      <div class="prev" style="margin:10px 0 0">${v.note}${tHelp?` <b style="color:#8790a3">${tHelp}</b>`:""}</div>
+    </div></div>`;
+}
+
+/* muestra la carga efectiva al lado de cada serie */
+function updateRow(sid,i){
+  const el=document.getElementById(`eff-${sid}-${i}`); if(!el) return;
+  const slot=slotById(sid), v=chosen(slot);
+  const d=draft[sid]||(DB.log[todayISO()]||{})[key(slot,v.id)];
+  const s=d&&d.sets&&d.sets[i];
+  if(!s||(!s.w&&s.w!==0&&s.w!=="0")||!s.r){ el.textContent=""; return; }
+  const kg = draft[sid] ? toKg(s.w) : s.w;
+  const e=effS(slot,v,kg);
+  el.innerHTML = (v.t==="load"&&DB.unit==="kg") ? `${Math.round(e*LB)}lb`
+    : `<span style="color:#8790a3">${Math.round(e*10)/10}kg</span><br>real`;
+}
+
+function updateCue(sid){
+  const slot=slotById(sid), v=chosen(slot), n=setsOf(slot);
+  const cue=document.getElementById("cue-"+sid), hint=document.getElementById("hint-"+sid);
+  if(!cue) return;
+  cue.className="cue"; if(hint) hint.innerHTML="";
+  const d=draft[sid]||(DB.log[todayISO()]||{})[key(slot,v.id)];
+
+  /* si NO hay historial en esta variante pero SÍ en otra del slot -> estimar arranque */
+  if((!d||!d.sets||!d.sets.some(s=>s&&s.r)) && !hist(slot,v.id).length){
+    const others=slot.v.filter(x=>x.id!==v.id).map(x=>({x,h:hist(slot,x.id)})).filter(o=>o.h.length);
+    if(others.length&&hint){
+      const o=others.sort((a,b)=>b.h.length-a.h.length)[0];
+      const lastSets=o.h[o.h.length-1].sets.filter(s=>s.r);
+      const bestEff=Math.max(...lastSets.map(s=>effS(slot,o.x,s.w)));
+      const targetEff=bestEff*(v.f/o.x.f);
+      const mo=modeOf(slot,v);
+      let inputKg;
+      if(mo==="perSide"||mo==="plate") inputKg=targetEff/2;
+      else if(mo==="bar")              inputKg=(targetEff-barKg(v))/2;
+      else if(mo==="bw")               inputKg=targetEff-DB.bw;
+      else if(mo==="assist")           inputKg=DB.bw-targetEff;
+      else                             inputKg=targetEff;
+      const lbl=mo==="assist"?"ayuda":mo==="bw"?"lastre":(mo==="bar"||mo==="plate")?"peso POR LADO":mo==="perSide"?"por mancuerna":"peso";
+      const val=Math.max(0,Math.round(fromKg(inputKg)*2)/2);
+      hint.innerHTML=`<div class="hint est">Estimado desde <b>${o.x.n}</b> (${fmtW(bestEff)} efectivos):
+        arranca con <b>${val} ${DB.unit}</b> de ${lbl}. Es una estimación — ajusta en la primera serie.</div>`;
+    }
+  }
+  if(!d||!d.sets) return;
+  const filled=d.sets.slice(0,n).filter(s=>s&&s.r).length;
+  if(!filled) return;
+  if(filled<n) return;
+
+  if(phase().phase==="Descarga"){
+    cue.className="cue done";
+    if(hint) hint.innerHTML=`<div class="hint ok">Descarga: no subas peso. Completa y vete a casa.</div>`;
+    return;
+  }
+  const allTop=d.sets.slice(0,n).every(s=>s&&Number(s.r)>=slot.hi);
+  if(allTop&&slot.hi>slot.lo){
+    cue.className="cue up";
+    const ws=d.sets.slice(0,n).map(s=>draft[sid]?toKg(s.w):Number(s.w)||0);
+    const w=Math.max(...ws);
+    const e=effS(slot,v,w);
+    const mo=modeOf(slot,v);
+    let nw;
+    if(mo==="perSide"||mo==="plate"||mo==="bar") nw=w+(e>=80?2.5:1.25);
+    else if(mo==="assist")  nw=Math.max(0,w-5);
+    else if(mo==="bw")      nw=w+(e>=DB.bw+10?2.5:1.25);
+    else                    nw=w+(e>=60?5:e>=20?2.5:1);
+    const msg = mo==="assist"
+      ? `Llenaste el rango con toda la asistencia. Baja la ayuda a <b>${fromKg(nw)} ${DB.unit}</b> (carga efectiva sube a ${fmtW(effS(slot,v,nw))}).`
+      : `Llenaste el rango en todas las series. Sube a <b>${fromKg(nw)} ${DB.unit}</b>${(mo==="bar"||mo==="plate")?" por lado":mo==="perSide"?" por mancuerna":""} y vuelve a ${slot.lo} reps.`;
+    if(hint) hint.innerHTML=`<div class="hint">${msg}</div>`;
+  } else {
+    cue.className="cue done";
+    if(hint) hint.innerHTML=`<div class="hint ok">Completo. Sigue sumando reps hasta ${slot.hi} en todas las series.</div>`;
+  }
+}
+
+/* ===== GRÁFICA DEL SLOT: todas las variantes en una sola línea de progreso ===== */
+function drawChart(sid){
+  const c=document.getElementById("ch-"+sid); if(!c) return;
+  const slot=slotById(sid), h=histSlot(slot), ctx=c.getContext("2d");
+  const dpr=devicePixelRatio||1, W=c.clientWidth, H=118;
+  c.width=W*dpr; c.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  const lg=document.getElementById("lg-"+sid); if(lg) lg.innerHTML="";
+  if(h.length<2){
+    ctx.fillStyle="#3d4453"; ctx.font="12px ui-sans-serif,system-ui"; ctx.textAlign="center";
+    ctx.fillText("Registra 2+ sesiones para ver tu progreso",W/2,H/2+4);
+    return;
+  }
+  const data=h.map(x=>x.vol), pad=15;
+  const mx=Math.max(...data), mn=Math.min(...data), rng=(mx-mn)||1;
+  const X=i=>pad+i*(W-pad*2)/(data.length-1);
+  const Y=v=>H-pad-((v-mn)/rng)*(H-pad*2-8);
+  ctx.strokeStyle="#232936"; ctx.lineWidth=1;
+  [0,.5,1].forEach(f=>{const y=pad+8+f*(H-pad*2-8);ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();});
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"rgba(255,138,61,.2)"); g.addColorStop(1,"rgba(255,138,61,0)");
+  ctx.beginPath(); ctx.moveTo(X(0),H-pad);
+  data.forEach((v,i)=>ctx.lineTo(X(i),Y(v)));
+  ctx.lineTo(X(data.length-1),H-pad); ctx.closePath(); ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath();
+  data.forEach((v,i)=>i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v)));
+  ctx.strokeStyle="#ff8a3d"; ctx.lineWidth=2; ctx.lineJoin="round"; ctx.stroke();
+  const used=[];
+  h.forEach((pt,i)=>{
+    let vi=slot.v.findIndex(x=>x.id===pt.v.id); if(vi<0)vi=0;
+    if(!used.includes(vi)) used.push(vi);
+    ctx.beginPath(); ctx.arc(X(i),Y(pt.vol),3.5,0,7);
+    ctx.fillStyle=VC[vi%VC.length]; ctx.fill();
+    ctx.strokeStyle="#0d0f14"; ctx.lineWidth=1.5; ctx.stroke();
+  });
+  ctx.fillStyle="#5c6478"; ctx.font="10px ui-sans-serif,system-ui"; ctx.textAlign="left";
+  ctx.fillText("Volumen efectivo (kg × reps)",pad,10);
+  ctx.textAlign="right";
+  const dl=data[data.length-1]-data[0];
+  ctx.fillStyle=dl>=0?"#4ade80":"#ff6b6b";
+  ctx.fillText((dl>=0?"+":"")+Math.round(dl),W-pad,10);
+  if(lg) lg.innerHTML=used.map(vi=>`<span><i style="background:${VC[vi%VC.length]}"></i>${slot.v[vi].n}</span>`).join("");
+}
+
+document.getElementById("savebtn").onclick=()=>{
+  const d=todayISO(); DB.log[d]=DB.log[d]||{};
+  let any=false;
+  Object.keys(draft).forEach(sid=>{
+    const slot=slotById(sid); if(!slot) return;
+    const v=chosen(slot);
+    const sets=(draft[sid].sets||[]).map(s=>({w:s&&s.w!==undefined&&s.w!==""?toKg(s.w):0,r:s&&s.r?Number(s.r):0}));
+    if(sets.some(s=>s.r)){ DB.log[d][key(slot,v.id)]={sets}; any=true; }
+  });
+  if(!any&&!Object.keys(DB.log[d]).length){ toast("No registraste ninguna serie"); return; }
+  persist(); toast(memoryOnly?"Aquí no guarda — descarga el archivo":"Sesión guardada");
+  draft={}; render();
+};
+
+function toolsHTML(){
+  return `<div class="tools">
+    <button id="bw">Peso corporal</button>
+    <button id="bars">Peso de barras</button>
+    <button id="exp">Exportar</button>
+    <button id="imp">Importar</button>
+    <button id="rst">Reiniciar ciclo</button>
+  </div><input type="file" id="file" accept=".json" hidden>
+  <div class="warnbox">
+    <b>Unidades:</b> el botón KG/LB de arriba cambia en qué unidad tecleas (para cuando la sede está en libras).
+    Todo se guarda en kg y verás la equivalencia al lado de cada serie.<br><br>
+    <b>Variantes:</b> el desplegable de cada ejercicio te deja cambiar a máquina, mancuernas o polea si está
+    ocupado. Cada variante guarda su propio historial, pero el <b>volumen y la gráfica del slot se suman igual</b>.
+    Al estrenar una variante te estimo el peso de arranque desde otra que ya hayas hecho.<br><br>
+    <b>Modo de carga:</b> el segundo desplegable de cada ejercicio define cómo cuenta el peso que tecleas:
+    número de la placa, discos por lado (×2), barra + discos por lado (×2 + barra), o mancuerna (×2).
+    Elígelo una vez por ejercicio y la app lo recuerda. Así puedes seguir anotando el peso de un lado
+    sin hacer cuentas, y el volumen sale correcto.<br><br>
+    <b>Dominadas:</b> asistida y lastrada están en la misma escala real (peso corporal ± ayuda/lastre),
+    así que tu progresión es una sola línea continua.<br><br>
+    Tus datos viven <b>solo en este celular</b>. Exporta respaldo cada tanto.
+    ${memoryOnly?`<br><br><b style="color:#ff8a3d">Aviso:</b> aquí no hay guardado permanente. Descarga el archivo y ábrelo en Chrome.`:""}
+  </div>`;
+}
+function bindTools(){
+  const $=id=>document.getElementById(id);
+  if($("bw")) $("bw").onclick=()=>{
+    const x=prompt("Tu peso corporal en kg (para calcular dominadas y ejercicios de peso corporal):",DB.bw);
+    if(x&&!isNaN(x)&&Number(x)>25){ DB.bw=Math.round(Number(x)*10)/10; persist(); render(); toast("Peso corporal: "+DB.bw+" kg"); }
+  };
+  if($("bars")) $("bars").onclick=()=>{
+    const s=prompt("Peso de la barra olímpica vacía, en kg (la estándar pesa 20):",DB.bars.std);
+    if(s&&!isNaN(s)) DB.bars.std=Number(s);
+    const e=prompt("Peso de la barra EZ vacía, en kg (suele ser 10):",DB.bars.ez);
+    if(e&&!isNaN(e)) DB.bars.ez=Number(e);
+    const m=prompt("Peso de la barra del Smith, en kg (varía mucho: 7-25; si no sabes, deja 15):",DB.bars.smith);
+    if(m&&!isNaN(m)) DB.bars.smith=Number(m);
+    persist(); render(); toast("Barras actualizadas");
+  };
+  if($("exp")) $("exp").onclick=()=>{
+    const b=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(b);
+    a.download=`bitacora-${todayISO()}.json`; a.click(); URL.revokeObjectURL(a.href);
+    toast("Respaldo descargado");
+  };
+  if($("imp")) $("imp").onclick=()=>$("file").click();
+  if($("rst")) $("rst").onclick=()=>{
+    if(!confirm("Pone la semana 1 (reintroducción) desde hoy. Tu historial NO se borra. ¿Seguir?")) return;
+    DB.start=todayISO(); persist(); render(); toast("Ciclo reiniciado");
+  };
+  if($("file")) $("file").onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{ try{
+      const o=JSON.parse(r.result); if(!o.log) throw 0;
+      /* acepta respaldos viejos (claves sin slot) y los migra */
+      const nl={};
+      for(const date in o.log){ nl[date]={};
+        for(const k in o.log[date]){
+          if(k.includes("::")){ nl[date][k]=o.log[date][k]; continue; }
+          const s=slotOfVariant(k);
+          nl[date][s?`${s.id}::${k}`:k]=o.log[date][k];
+        } }
+      DB.log=nl; DB.start=o.start||DB.start;
+      if(o.bw) DB.bw=o.bw; if(o.unit) DB.unit=o.unit;
+      if(o.pick) DB.pick=o.pick; if(o.mode) DB.mode=o.mode; if(o.bars) DB.bars=o.bars;
+      DB.fixedRow=o.fixedRow||0;
+      fixRowPend();                       // remapea row_pend -> row_stack si viene de un respaldo viejo
+      persist(); render();
+      const n=Object.keys(DB.log).length;
+      toast(`Restaurado: ${n} ${n===1?"sesión":"sesiones"}`);
+    }catch(_){ toast("Ese archivo no sirve"); } };
+    r.readAsText(f);
+  };
+}
+function fmt(iso){const[y,m,d]=iso.split("-");return `${d}/${m}`;}
+let tt; function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");
+clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),1900);}
+addEventListener("resize",()=>document.querySelectorAll(".ex.open").forEach(e=>drawChart(e.dataset.slot)));
+
+load(); renderNav(); render();
+if(seeded) setTimeout(()=>toast("Cargada tu sesión del 13/07"),400);
+</script>
+</body>
+</html>
