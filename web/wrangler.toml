@@ -1,0 +1,9 @@
+name = "bitacora-web"
+compatibility_date = "2026-01-01"
+
+[assets]
+directory = "./public"
+
+[[routes]]
+pattern = "gym.jp-home-lab.com"
+custom_domain = true

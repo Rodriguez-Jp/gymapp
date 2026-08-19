@@ -1,0 +1,12 @@
+name = "bitacora-api"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[[routes]]
+pattern = "gymapi.jp-home-lab.com"
+custom_domain = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bitacora-db"
+database_id = "bc7bfebb-bf6e-4436-a3bc-a5b95ea3600e"
