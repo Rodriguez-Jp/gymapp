@@ -21,7 +21,10 @@ border-bottom:1px solid var(--line);padding:14px var(--pad) 0}
 .brand h1 span{color:var(--signal)}
 .hb{display:flex;align-items:center;gap:8px}
 .wk{font-size:11px;color:var(--dim);text-align:right;line-height:1.3}
-.wk b{color:var(--text)}
+.wk b{color:var(--text);cursor:pointer}
+.wknav{background:none;border:0;color:var(--dim);font:inherit;font-size:15px;font-weight:800;
+  padding:0 4px;cursor:pointer;line-height:1}
+.wknav:disabled{opacity:.3;cursor:default}
 .ubtn{background:var(--panel-2);border:1px solid var(--line);color:var(--dim);font:inherit;
 font-size:11px;font-weight:700;padding:6px 9px;border-radius:7px;cursor:pointer}
 .ubtn.on{color:var(--signal);border-color:rgba(255,138,61,.4)}
@@ -147,7 +150,12 @@ pointer-events:none;transition:.25s;z-index:40}
   <div class="brand">
     <h1>Bitá<span>cora</span></h1>
     <div class="hb">
-      <div class="wk" id="wk"><b id="wklabel"></b><br><span id="today"></span></div>
+      <div class="wk" id="wk">
+        <button class="wknav" id="wkprev" title="Semana anterior">‹</button>
+        <b id="wklabel" title="Toca para volver a la semana real"></b>
+        <button class="wknav" id="wknext" title="Semana siguiente">›</button>
+        <br><span id="today"></span>
+      </div>
       <button class="ubtn" id="ubtn">KG</button>
       <button class="ubtn" id="outbtn" style="display:none">Salir</button>
     </div>
@@ -177,263 +185,179 @@ pointer-events:none;transition:.25s;z-index:40}
      assist  -> máquina asistida (campo = ayuda; carga real = PC - ayuda)
    factor = dificultad relativa dentro del slot (para estimar arranque al cambiar de variante)
 ============================================ */
-const NIPPARD_PROGRAM = {
-  lun: { name:"Upper", sub:"Fuerza",
-    warm:["Cardio ligero — 5 min","Dislocaciones con banda — 15","Gato-vaca torácico — 10","Rotación externa con banda — 15/lado"],
-    cardio:{tipo:"HIIT (bici / elíptica)", intensidad:"85-95% FC máx", dur:"10 min · 10 rondas de 30s fuerte / 30s suave", nota:"Siempre al final de la fuerza. El único día HIIT: intervalos duros y cortos."},
-    slots:[
-      {id:"lun_press_inc", m:"Pecho", tech:"failure", setsByWeek:[2,3,3,3,3,2,3,3,3,3,4,4], lo:6, hi:8, rest:"3-5 min", def:[0,0], v:[
-        {id:"inc_bb",  n:"Press inclinado con barra 45°",   t:"bar", bar:"std", f:1.00, note:"Pausa 1s abajo manteniendo tensión en el pecho."},
-        {id:"inc_db",  n:"Press inclinado con mancuernas 45°", t:"perSide", f:0.50, note:"Sustitución Nippard. Más rango. Peso POR mancuerna."},
-        {id:"inc_mach",n:"Press inclinado en máquina 45°",  t:"load", f:1.15, note:"Sustitución Nippard. Cero estabilización, empuja fuerte."},
-      ]},
-      {id:"lun_fly", m:"Pecho", tech:"failure", setsByWeek:[2,2,2,2,2,2,3,3,3,3,3,3], lo:8, hi:10, rest:"1-2 min", def:[0,0], v:[
-        {id:"cross_ladder",n:"Cable crossover en escalera",       t:"load", f:1.00, note:"Una serie con polea baja, una con polea media, una con polea alta. Si sólo tienes 2 series, elige las 2 posiciones que prefieras."},
-        {id:"pec_deck",    n:"Pec deck",                          t:"load", f:1.05, note:"Sustitución Nippard. Estiramiento profundo, pausa 1s en la contracción."},
-        {id:"fly_db_bh",   n:"Apertura con mancuerna (mitad baja)", t:"perSide", f:0.50, note:"Sustitución Nippard. Todo el trabajo en la mitad baja del ROM. Peso POR mancuerna."},
-      ]},
-      {id:"lun_pull_v", m:"Espalda", tech:"failure", setsByWeek:[2,3,3,3,3,2,3,3,3,3,3,3], lo:8, hi:10, rest:"2-3 min", def:[0,0], v:[
-        {id:"pullup_w",   n:"Dominada agarre ancho",             t:"bw",   f:1.00, note:"Agarre 1.5x hombros. Negativo lento 2-3s. Siente los dorsales separándose al bajar. Lastre = peso añadido (0 si es corporal)."},
-        {id:"pulldown_w", n:"Jalón al pecho agarre ancho",       t:"load", f:0.85, note:"Sustitución Nippard. Mismo agarre ancho, misma intención."},
-        {id:"pulldown_dh",n:"Jalón con doble mango (dual-handle)",t:"load", f:0.85, note:"Sustitución Nippard. Un mango por mano, rango extra."},
-      ]},
-      {id:"lun_lat", m:"Hombro", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,2,2,3,3], lo:8, hi:10, rest:"1-2 min", def:[0,0], v:[
-        {id:"lat_cable",   n:"Elevación lateral en polea alta",       t:"load", f:1.00, note:"Enfócate en apretar el deltoide lateral para mover el peso."},
-        {id:"lat_cuff",    n:"Elevación lateral en polea alta con muñequera", t:"load", f:1.00, note:"Sustitución Nippard. La muñequera saca la muñeca de la ecuación."},
-        {id:"lat_db_lean", n:"Elevación lateral inclinado con mancuerna", t:"perSide", f:0.50, note:"Sustitución Nippard. Agárrate de un poste e inclínate. Peso POR mancuerna."},
-      ]},
-      {id:"lun_row", m:"Espalda", tech:"failure_llp", setsByWeek:[2,2,2,2,2,2,3,3,3,3,3,3], lo:6, hi:8, rest:"2-3 min", def:[0,0], v:[
-        {id:"row_pd",   n:"Remo Pendlay con déficit",       t:"bar", bar:"std", f:0.90, note:"Párate sobre un disco. Busca un gran estiramiento y toca el abdomen/pecho en cada rep."},
-        {id:"row_smith",n:"Remo en Smith",                  t:"bar", bar:"smith", f:0.95, note:"Sustitución Nippard. Recorrido guiado, mismo patrón."},
-        {id:"row_db",   n:"Remo con mancuerna a un brazo",  t:"perSide", f:0.50, note:"Sustitución Nippard. Peso POR mancuerna. Reps por lado."},
-      ]},
-      {id:"lun_tri", m:"Tríceps", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:8, hi:10, rest:"1-2 min", def:[0,0], v:[
-        {id:"tri_oh_bar",  n:"Extensión overhead en polea (barra)",  t:"load", f:1.00, note:"Opcional: pausa 0.5-1s en el estiramiento de cada rep."},
-        {id:"tri_oh_rope", n:"Extensión overhead en polea (cuerda)", t:"load", f:0.95, note:"Sustitución Nippard. Abre la cuerda en la contracción."},
-        {id:"tri_skull_db",n:"Press francés con mancuernas",         t:"perSide", f:0.38, note:"Sustitución Nippard. Peso POR mancuerna. Codos fijos."},
-      ]},
-      {id:"lun_curl", m:"Bíceps", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:8, hi:10, rest:"1-2 min", def:[0,0], v:[
-        {id:"curl_bay",      n:"Curl bayesiano en polea",              t:"load", f:1.00, note:"Si tienes desbalance izq/der, hazlas a 1 brazo empezando por el débil, y luego iguala reps con el otro. Polea baja detrás de ti, tensión constante."},
-        {id:"curl_bay_super",n:"Curl bayesiano alto sentado (super)",  t:"load", f:1.00, note:"Sustitución Nippard. Sentado, polea alta, máximo estiramiento del bíceps."},
-        {id:"curl_inc",      n:"Curl inclinado con mancuernas (stretch)", t:"perSide", f:0.48, note:"Sustitución Nippard. Banco inclinado, brazos atrás. Peso POR mancuerna."},
-      ]},
-      {id:"lun_farmer", m:"Antebrazo", tech:"failure", tag:"fore", setsByWeek:[2,2,2,2,2,2,2,2,2,2,2,2], lo:30, hi:45, rest:"90s", def:[0,0], v:[
-        {id:"farmer_db",  n:"Farmer hold con mancuernas", t:"perSide", f:0.50, note:"COMPLEMENTO grip. Agarra lo más pesado que puedas sostener 30-45s. Base isométrica para todos los tirones. Reps = segundos. Peso POR mancuerna."},
-        {id:"farmer_trap",n:"Farmer hold con barra trap", t:"load", f:1.00, note:"COMPLEMENTO grip. Sostén 30-45s. Reps = segundos."},
-        {id:"deadhang",   n:"Dead hang de barra",         t:"bw", f:0.0, note:"COMPLEMENTO grip. Cuélgate de la barra 30-45s. Lastre = peso añadido (0 si es corporal). Reps = segundos."},
-      ]},
-    ],
-  },
+const B4=[4,4,4,2,4,4,4,2,4,4,4,2];
+const B3=[3,3,3,2,3,3,3,2,3,3,3,2];
+const B2=[2,2,2,1,2,2,2,1,2,2,2,1];
 
-  mar: { name:"Lower", sub:"Fuerza",
-    warm:["Bici o caminadora — 5 min","Sentadilla profunda con pausa — 5 × 20s","Movilidad 90/90 — 8/lado","Tobillo en pared — 10/lado"],
-    cardio:null,
-    slots:[
-      {id:"mar_lyingcurl", m:"Isquios", tech:"failure_llp", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:8, hi:10, rest:"1-2 min", def:[0,0], v:[
-        {id:"curl_lying",n:"Curl femoral tumbado", t:"load", f:1.00, note:"Ajusta la máquina para el mayor estiramiento posible abajo. Evita que el glúteo se despegue."},
-        {id:"curl_seat", n:"Curl femoral sentado", t:"load", f:1.05, note:"Sustitución Nippard. Inclínate al frente para estirar más."},
-        {id:"nordic",    n:"Nordic ham curl",      t:"bw",   f:0.55, note:"Sustitución Nippard. Baja lento y frena con isquios. Lastre = 0."},
-      ]},
-      {id:"mar_squat", m:"Cuádriceps", tech:"failure", setsByWeek:[2,2,3,3,3,2,3,3,3,3,3,3], lo:6, hi:8, rest:"3-5 min", def:[0,0], v:[
-        {id:"squat_smith", n:"Sentadilla en Smith",           t:"bar", bar:"smith", f:1.10, note:"Pies ~3-6 pulgadas adelante para una sentadilla más vertical con más tensión en cuádriceps."},
-        {id:"bulgarian_db",n:"Sentadilla búlgara con mancuernas", t:"perSide", f:0.50, note:"Sustitución Nippard. Peso POR mancuerna. Reps por pierna."},
-        {id:"squat_hb",    n:"Sentadilla trasera barra alta",  t:"bar", bar:"std", f:1.00, note:"Sustitución Nippard. Profundidad completa sin redondear lumbar."},
-      ]},
-      {id:"mar_rdl", m:"Isquios", tech:"failure", setsByWeek:[2,2,3,3,3,2,3,3,3,3,4,4], lo:6, hi:8, rest:"2-3 min", def:[0,0], v:[
-        {id:"rdl_bb",    n:"Peso muerto rumano con barra",  t:"bar", bar:"std", f:1.00, note:"Para mantener tensión en isquios, detente al 75% del lockout (quédate en los 3/4 bajos del ROM)."},
-        {id:"rdl_db",    n:"RDL con mancuernas",            t:"perSide", f:0.50, note:"Sustitución Nippard. Peso POR mancuerna."},
-        {id:"rdl_snatch",n:"RDL agarre ancho (snatch)",     t:"bar", bar:"std", f:0.90, note:"Sustitución Nippard. Agarre ancho = más rango."},
-      ]},
-      {id:"mar_legext", m:"Cuádriceps", tech:"failure", setsByWeek:[2,2,2,2,2,2,3,3,3,3,3,3], lo:8, hi:10, rest:"1-2 min", def:[0,0], v:[
-        {id:"leg_ext",       n:"Extensión de cuádriceps", t:"load", f:1.00, note:"Respaldo lo más atrás posible. Agarra fuerte los mangos. Negativo 2-3s."},
-        {id:"reverse_nordic",n:"Reverse Nordic",          t:"bw",   f:0.50, note:"Sustitución Nippard. Cae hacia atrás controlando con cuádriceps. Lastre = 0."},
-        {id:"sissy",         n:"Sentadilla sissy",        t:"bw",   f:0.55, note:"Sustitución Nippard. Lastre = 0 si es corporal."},
-      ]},
-      {id:"mar_calf", m:"Gemelo", tech:"static_stretch", setsByWeek:[2,2,2,2,2,2,3,3,3,3,4,4], lo:8, hi:10, rest:"1-2 min", def:[0,0], v:[
-        {id:"calf_st",   n:"Elevación de talones de pie",     t:"load", f:1.00, note:"Pausa 1-2s abajo. Rueda el tobillo sobre la punta del pie."},
-        {id:"calf_seat", n:"Elevación de talones sentado",    t:"load", f:0.80, note:"Sustitución Nippard. Enfoca el sóleo."},
-        {id:"calf_press",n:"Elevación de talones en prensa",  t:"load", f:1.30, note:"Sustitución Nippard. Rango completo, sin rebote."},
-      ]},
-      {id:"mar_crunch", m:"Core", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:8, hi:10, rest:"1-2 min", def:[0,0], v:[
-        {id:"cable_crunch",  n:"Crunch en polea",          t:"load", f:1.00, note:"Redondea la zona lumbar al encoger. Conexión mente-músculo con el abdomen."},
-        {id:"decline_crunch",n:"Crunch declinado con peso", t:"bw",  f:0.45, note:"Sustitución Nippard. Lastre = disco sobre el pecho (0 si es corporal)."},
-        {id:"crunch_mach",   n:"Crunch en máquina",         t:"load", f:1.05, note:"Sustitución Nippard. Conexión mente-músculo."},
-      ]},
-    ],
-  },
-
-  mie: { rest:true, name:"Descanso", sub:"Recuperación",
-    tips:["Caminata suave 20-30 min si quieres.","Movilidad ligera.","Come y duerme. Aquí es donde crece el músculo."] },
-
-  jue: { name:"Pull", sub:"Hipertrofia",
-    warm:["Cardio ligero — 5 min","Colgado pasivo — 2 × 30s","Activación escapular — 10","Rotación externa con banda — 15/lado"],
-    cardio:{tipo:"Zona 2 / LISS", intensidad:"60-70% FC máx", dur:"15 min", nota:"Ritmo conversacional. La base del cardio: fácil, sostenido, sin machacar. Al final de la fuerza."},
-    slots:[
-      {id:"jue_pulldown", m:"Espalda", tech:"failure", setsByWeek:[2,2,2,2,2,2,3,3,3,3,3,3], lo:8, hi:10, rest:"2-3 min", def:[0,0], v:[
-        {id:"pulldown_n",  n:"Jalón al pecho agarre neutro",       t:"load", f:1.00, note:"Mango más al frente, como un cruce entre pullover y jalón. Siente los dorsales más que el peso."},
-        {id:"pullup_n",    n:"Dominada agarre neutro",             t:"bw",   f:1.18, note:"Sustitución Nippard. Lastre = peso añadido (0 si es corporal)."},
-        {id:"pulldown_dh2",n:"Jalón con doble mango (dual-handle)",t:"load", f:1.00, note:"Sustitución Nippard. Un mango por mano, rango extra."},
-      ]},
-      {id:"jue_row_cs", m:"Espalda", tech:"failure", setsByWeek:[2,3,3,3,3,2,3,3,3,3,4,4], lo:8, hi:10, rest:"2-3 min", def:[0,0], v:[
-        {id:"row_chest", n:"Remo en máquina con apoyo de pecho", t:"load", f:1.00, note:"Codos ~45°, aprieta fuerte las escápulas arriba en cada rep."},
-        {id:"row_tbar",  n:"Remo T-bar con apoyo de pecho",      t:"load", f:1.00, note:"Sustitución Nippard. Sin impulso."},
-        {id:"row_db_inc",n:"Remo con mancuerna en banco inclinado", t:"perSide", f:0.50, note:"Sustitución Nippard. Pecho apoyado en banco inclinado. Peso POR mancuerna."},
-      ]},
-      {id:"jue_row_cable", m:"Espalda", tech:"failure_llp", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:10, hi:12, rest:"2-3 min", def:[0,0], v:[
-        {id:"row_cable",  n:"Remo en polea sentado agarre neutro", t:"load", f:1.00, note:"Aprieta las escápulas, lleva los codos abajo y atrás."},
-        {id:"row_helms",  n:"Helms row",                          t:"perSide", f:0.50, note:"Sustitución Nippard. Pecho apoyado en banco inclinado alto. Peso POR mancuerna."},
-        {id:"row_meadows",n:"Meadows row",                        t:"load", f:0.55, note:"Sustitución Nippard. Remo con punta de barra a un brazo, rango extra."},
-      ]},
-      {id:"jue_rear", m:"Hombro", tech:"myoreps", setsByWeek:[2,2,2,2,2,2,3,3,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"rear_cable",n:"Vuelo posterior en polea a 45° (1 brazo)", t:"load", f:1.00, note:"Pausa 1-2s en la contracción. ¡Aprieta fuerte el deltoide posterior!"},
-        {id:"face_pull", n:"Face pull con cuerda",                    t:"load", f:0.90, note:"Sustitución Nippard. Codos altos, tira hacia la frente."},
-        {id:"rear_pec",  n:"Pec deck invertido",                      t:"load", f:1.10, note:"Sustitución Nippard. Aprieta duro el deltoide posterior."},
-      ]},
-      {id:"jue_shrug", m:"Espalda", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"shrug_m",    n:"Encogimientos en máquina",           t:"load", f:1.00, note:"Breve pausa arriba. Piensa en subir los hombros hacia las orejas."},
-        {id:"shrug_cable",n:"Encogimiento-in en polea con pausa", t:"load", f:0.95, note:"Sustitución Nippard. Pausa arriba, encoge hacia dentro."},
-        {id:"shrug_db",   n:"Encogimientos con mancuernas",       t:"perSide", f:0.50, note:"Sustitución Nippard. Peso POR mancuerna."},
-      ]},
-      {id:"jue_curl", m:"Bíceps", tech:"failure", setsByWeek:[2,2,2,2,2,2,3,3,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"curl_ez",      n:"Curl con barra EZ",         t:"bar", bar:"ez", f:1.00, note:"Tensión constante en el bíceps. Reps lentas y controladas."},
-        {id:"curl_ez_cable",n:"Curl con barra EZ en polea", t:"load", f:0.92, note:"Sustitución Nippard. Tensión constante desde la polea."},
-        {id:"curl_db",      n:"Curl con mancuernas",        t:"perSide", f:0.42, note:"Sustitución Nippard. Peso POR mancuerna."},
-      ]},
-      {id:"jue_preach", m:"Bíceps", tech:"myoreps", setsByWeek:[1,1,1,1,1,1,2,2,2,2,3,3], lo:12, hi:15, rest:"1-2 min", def:[0,0], v:[
-        {id:"preach_mach",n:"Curl predicador en máquina",  t:"load", f:1.00, note:"1 SERIE (Myo-reps en semanas ≥2). Reps suaves y controladas. Conexión mente-músculo."},
-        {id:"preach_ez",  n:"Curl predicador con barra EZ", t:"bar", bar:"ez", f:1.05, note:"Sustitución Nippard. Banco predicador, sin balanceo."},
-        {id:"preach_db",  n:"Curl predicador con mancuerna", t:"perSide", f:0.45, note:"Sustitución Nippard. Un brazo, apoya el tríceps. Peso POR mancuerna."},
-      ]},
-      {id:"jue_wrist", m:"Antebrazo", tech:"failure", tag:"fore", setsByWeek:[2,2,2,2,2,2,2,2,2,2,2,2], lo:12, hi:15, rest:"1 min", def:[0,0], v:[
-        {id:"wrist_bb",   n:"Curl de muñeca con barra (flexores)", t:"bar", bar:"ez", f:1.00, note:"COMPLEMENTO antebrazo. Apoya los antebrazos en el banco, deja que la barra ruede hasta los dedos y cierra fuerte. Rango completo."},
-        {id:"wrist_db",   n:"Curl de muñeca con mancuernas tras la espalda", t:"perSide", f:0.50, note:"COMPLEMENTO antebrazo. De pie, barra/mancuernas tras los glúteos. Peso POR mancuerna."},
-        {id:"wrist_cable",n:"Curl de muñeca en polea",             t:"load", f:0.95, note:"COMPLEMENTO antebrazo. Tensión constante."},
-      ]},
-      {id:"jue_revwrist", m:"Antebrazo", tech:"failure", tag:"fore", setsByWeek:[2,2,2,2,2,2,2,2,2,2,2,2], lo:15, hi:20, rest:"1 min", def:[0,0], v:[
-        {id:"revwrist_ez",   n:"Curl inverso con barra EZ (extensores)", t:"bar", bar:"ez", f:1.00, note:"COMPLEMENTO antebrazo. Agarre prono. Trabaja los extensores, clave para equilibrio articular. Peso ligero, control total."},
-        {id:"revwrist_cable",n:"Extensión de muñeca en polea",          t:"load", f:0.95, note:"COMPLEMENTO antebrazo. Tensión constante en los extensores."},
-        {id:"revwrist_db",   n:"Curl inverso con mancuernas",           t:"perSide", f:0.45, note:"COMPLEMENTO antebrazo. Peso POR mancuerna."},
-      ]},
-    ],
-  },
-
-  vie: { name:"Push", sub:"Hipertrofia",
-    warm:["Cardio ligero — 5 min","Dislocaciones con banda — 15","Movilidad torácica — 10","Rotación externa — 15/lado"],
-    cardio:{tipo:"Tempo / Umbral", intensidad:"75-85% FC máx", dur:"12 min", nota:"Ritmo firme sostenido, algo incómodo pero controlable. Al final de la fuerza."},
-    slots:[
-      {id:"vie_bench", m:"Pecho", tech:"failure", setsByWeek:[2,3,3,3,3,2,3,3,3,3,4,4], lo:8, hi:10, rest:"3-5 min", def:[0,0], v:[
-        {id:"bench_bb",  n:"Press de banca con barra",     t:"bar", bar:"std", f:1.00, note:"Arco cómodo, pausa breve en el pecho y explota hacia arriba."},
-        {id:"bench_mach",n:"Press de pecho en máquina",    t:"load", f:1.15, note:"Sustitución Nippard. Rango completo."},
-        {id:"bench_db",  n:"Press de banca con mancuernas", t:"perSide", f:0.48, note:"Sustitución Nippard. Peso POR mancuerna."},
-      ]},
-      {id:"vie_press", m:"Hombro", tech:"failure", setsByWeek:[2,2,2,2,2,2,3,3,3,3,3,3], lo:8, hi:10, rest:"2-3 min", def:[0,0], v:[
-        {id:"press_mach", n:"Press de hombro en máquina",     t:"load", f:1.00, note:"Rompe al menos 90° con los codos. Conexión mente-músculo con los deltoides."},
-        {id:"press_cable",n:"Press de hombro en polea",       t:"load", f:0.90, note:"Sustitución Nippard. Tensión constante."},
-        {id:"press_db",   n:"Press de hombro con mancuernas", t:"perSide", f:0.42, note:"Sustitución Nippard. Peso POR mancuerna."},
-      ]},
-      {id:"vie_fly", m:"Pecho", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"fly_db_half",  n:"Apertura con mancuerna (mitad baja)",  t:"perSide", f:0.50, note:"Todas las reps en la mitad baja del ROM. Busca un estiramiento profundo del pectoral. Peso POR mancuerna."},
-        {id:"fly_cable_half",n:"Apertura en polea sentado (mitad baja)", t:"load", f:0.90, note:"Sustitución Nippard. Trabaja la mitad baja del recorrido."},
-        {id:"cross_lowhigh", n:"Cable crossover de baja a alta",      t:"load", f:0.90, note:"Sustitución Nippard. Cruza las manos arriba."},
-      ]},
-      {id:"vie_lat", m:"Hombro", tech:"myoreps", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"lat_cable2",  n:"Elevación lateral en polea alta",           t:"load", f:1.00, note:"Aprieta el deltoide lateral para mover el peso."},
-        {id:"lat_cuff2",   n:"Elevación lateral en polea alta con muñequera", t:"load", f:1.00, note:"Sustitución Nippard. La muñequera saca la muñeca de la ecuación."},
-        {id:"lat_db_lean2",n:"Elevación lateral inclinado con mancuerna", t:"perSide", f:0.50, note:"Sustitución Nippard. Agárrate de un poste e inclínate. Peso POR mancuerna."},
-      ]},
-      {id:"vie_tri", m:"Tríceps", tech:"failure", setsByWeek:[2,2,2,2,2,2,3,3,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"tri_oh_bar2",  n:"Extensión overhead en polea (barra)",  t:"load", f:1.00, note:"Opcional: pausa 0.5-1s en el estiramiento."},
-        {id:"tri_oh_rope2", n:"Extensión overhead en polea (cuerda)", t:"load", f:0.95, note:"Sustitución Nippard. Abre la cuerda en la contracción."},
-        {id:"tri_skull_db2",n:"Press francés con mancuernas",         t:"perSide", f:0.38, note:"Sustitución Nippard. Peso POR mancuerna. Codos fijos."},
-      ]},
-      {id:"vie_kick", m:"Tríceps", tech:"myoreps", setsByWeek:[1,1,1,1,1,1,2,2,2,2,3,3], lo:12, hi:15, rest:"1-2 min", def:[0,0], v:[
-        {id:"kick_cable",n:"Patada de tríceps en polea", t:"load", f:1.00, note:"1 SERIE (Myo-reps en semanas ≥2). En la contracción completa, el hombro debe quedar detrás del torso."},
-        {id:"kick_db",   n:"Patada de tríceps con mancuerna", t:"perSide", f:0.40, note:"Sustitución Nippard. Peso POR mancuerna."},
-        {id:"dip_bench", n:"Fondos entre bancos",         t:"bw", f:0.60, note:"Sustitución Nippard. Lastre = peso añadido (0 si es corporal)."},
-      ]},
-      {id:"vie_core", m:"Core", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:10, hi:20, rest:"1-2 min", def:[0,0], v:[
-        {id:"leg_raise", n:"Elevación de piernas en silla romana", t:"bw", f:0.45, note:"Deja que la lumbar se redondee al subir las piernas. El rango 10-20 es amplio a propósito: ve hasta el RPE indicado con forma controlada. Lastre = 0."},
-        {id:"leg_hang",  n:"Elevación de piernas colgado",         t:"bw", f:0.50, note:"Sustitución Nippard. Sin balanceo."},
-        {id:"candlestick",n:"Candlestick modificado",             t:"bw", f:0.40, note:"Sustitución Nippard. Rueda hacia atrás controlando el core. Lastre = 0."},
-      ]},
-    ],
-  },
-
-  sab: { name:"Legs", sub:"Hipertrofia",
-    warm:["Bici — 5 min","Sentadilla profunda con pausa — 5 × 20s","Movilidad 90/90 — 8/lado","Tobillo — 10/lado"],
-    cardio:null,
-    slots:[
-      {id:"sab_press", m:"Cuádriceps", tech:"failure", setsByWeek:[2,3,3,3,3,2,3,3,3,3,4,4], lo:8, hi:10, rest:"2-3 min", def:[0,0], v:[
-        {id:"leg_press",  n:"Prensa de piernas",              t:"load", f:1.00, note:"Pies más abajo en la plataforma = más cuádriceps. Baja profundo sin redondear la espalda."},
-        {id:"lunge_smith",n:"Zancada estática en Smith",      t:"bar", bar:"smith", f:0.60, note:"Sustitución Nippard. Recorrido guiado, reps por pierna."},
-        {id:"lunge_db",   n:"Zancadas caminando con mancuernas", t:"perSide", f:0.50, note:"Sustitución Nippard. Peso POR mancuerna."},
-      ]},
-      {id:"sab_curl", m:"Isquios", tech:"failure_llp", setsByWeek:[2,2,2,2,2,2,3,3,3,3,4,4], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"curl_seat2", n:"Curl femoral sentado", t:"load", f:1.00, note:"Inclínate hacia adelante sobre la máquina para máximo estiramiento de isquios."},
-        {id:"curl_lying2",n:"Curl femoral tumbado", t:"load", f:0.95, note:"Sustitución Nippard. Cadera pegada al banco."},
-        {id:"nordic2",    n:"Nordic ham curl",      t:"bw",   f:0.55, note:"Sustitución Nippard. Baja lento frenando con isquios. Lastre = 0."},
-      ]},
-      {id:"sab_bulg", m:"Cuádriceps", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,2,2,2,2], lo:8, hi:10, rest:"2-3 min", def:[0,0], v:[
-        {id:"bulgarian",n:"Sentadilla búlgara con mancuernas", t:"perSide", f:0.50, note:"Baja hasta que el muslo delantero quede paralelo al piso. Empuja con el talón delantero. Peso POR mancuerna."},
-        {id:"step_up",  n:"Step-up con mancuernas",            t:"perSide", f:0.50, note:"Sustitución Nippard. Empuja con el talón. Peso POR mancuerna."},
-        {id:"goblet",   n:"Sentadilla goblet",                t:"load", f:1.00, note:"Sustitución Nippard. Mancuerna al pecho, torso vertical."},
-      ]},
-      {id:"sab_legext", m:"Cuádriceps", tech:"myoreps", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"leg_ext2",       n:"Extensión de cuádriceps", t:"load", f:1.00, note:"Respaldo lo más atrás posible. Negativo 2-3s."},
-        {id:"reverse_nordic2",n:"Reverse Nordic",          t:"bw",   f:0.50, note:"Sustitución Nippard. Cae hacia atrás controlando con cuádriceps. Lastre = 0."},
-        {id:"sissy2",         n:"Sentadilla sissy",        t:"bw",   f:0.55, note:"Sustitución Nippard. Lastre = 0 si es corporal."},
-      ]},
-      {id:"sab_add", m:"Glúteo", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"adduct",      n:"Aductor en máquina",           t:"load", f:1.00, note:"Conexión mente-músculo con los aductores. Excelentes para masa de muslo frontal."},
-        {id:"adduct_cable",n:"Aducción de cadera en polea",  t:"load", f:0.60, note:"Sustitución Nippard. Rango completo."},
-        {id:"adduct_cope", n:"Aducción Copenhague",          t:"bw",   f:0.50, note:"Sustitución Nippard. Isométrico/dinámico lateral. Lastre = 0."},
-      ]},
-      {id:"sab_abd", m:"Glúteo", tech:"failure", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"abduct",      n:"Abductor en máquina",           t:"load", f:1.00, note:"Si puedes, usa pads para más ROM. Inclínate al frente y agárrate para estirar más el glúteo."},
-        {id:"abduct_cable",n:"Abducción de cadera en polea",  t:"load", f:0.60, note:"Sustitución Nippard. Aprieta el glúteo arriba."},
-        {id:"band_walk",   n:"Caminata lateral con banda",    t:"bw",   f:0.30, note:"Sustitución Nippard. Banda sobre las rodillas, pasos laterales. Lastre = 0."},
-      ]},
-      {id:"sab_calf", m:"Gemelo", tech:"static_stretch", setsByWeek:[2,2,2,2,2,2,2,2,3,3,3,3], lo:10, hi:12, rest:"1-2 min", def:[0,0], v:[
-        {id:"calf_st2",  n:"Elevación de talones de pie",     t:"load", f:1.00, note:"Pausa 1-2s abajo. Rueda el tobillo sobre la punta del pie."},
-        {id:"calf_seat2",n:"Elevación de talones sentado",    t:"load", f:0.80, note:"Sustitución Nippard. Enfoca el sóleo."},
-        {id:"calf_press2",n:"Elevación de talones en prensa", t:"load", f:1.30, note:"Sustitución Nippard. Rango completo, sin rebote."},
-      ]},
-    ],
-  },
-
-  dom: { rest:true, name:"Descanso", sub:"Recuperación",
-    tips:["Caminata larga si te provoca.","Movilidad suave, nada de cargar.","Prepara la comida de la semana."] },
+const HIBRIDO_A = {
+  name:"Tren inferior", sub:"Fuerza (rodilla)",
+  warm:["Bici o remo suave, 3 min.","Movilidad de tobillo y cadera (círculos, sentadilla profunda sostenida).","2 series ligeras de sentadilla goblet con poco peso."],
+  slots:[
+    {id:"hA1", m:"Cuádriceps", setsByWeek:B4, lo:4, hi:6, rest:"3 min", def:[0], v:[
+      {id:"back_squat", n:"Sentadilla trasera", t:"load", f:1, note:"Profundidad completa, sin rebote. El ROM completo ES el trabajo de movilidad de cadera y tobillo."},
+      {id:"ssb_squat", n:"Sentadilla con barra de seguridad (SSB)", t:"load", f:1, note:"Alternativa si la trasera molesta los hombros/muñecas."},
+      {id:"legpress90", n:"Prensa a 90°+", t:"load", f:1.3, note:"Alternativa de menor exigencia técnica."},
+    ]},
+    {id:"hA2", m:"Isquios", setsByWeek:B3, lo:6, hi:8, rest:"2-3 min", def:[0], v:[
+      {id:"rdl", n:"Peso muerto rumano", t:"load", f:1, note:"Descenso 3s, buscar estiramiento máximo de isquios manteniendo columna neutra."},
+      {id:"rdl_db", n:"Peso muerto rumano con mancuernas", t:"perSide", f:0.9, note:"Alternativa."},
+    ]},
+    {id:"hA3", m:"Cuádriceps", setsByWeek:B3, lo:8, hi:10, rest:"2 min", def:[0], v:[
+      {id:"bulgara", n:"Sentadilla búlgara", t:"perSide", f:1, note:"Pie trasero elevado 30-40cm. Rango profundo. Trabaja estabilidad + flexor de cadera en estiramiento. Por pierna."},
+      {id:"lunge_walk", n:"Zancada caminando con mancuernas", t:"perSide", f:0.9, note:"Alternativa."},
+    ]},
+    {id:"hA4", m:"Isquios", setsByWeek:B3, lo:10, hi:12, rest:"1-2 min", def:[0], v:[
+      {id:"legcurl_seated", n:"Curl femoral sentado", t:"load", f:1, note:"Sentado > tumbado: entrena el isquio en posición alargada."},
+      {id:"legcurl_lying", n:"Curl femoral tumbado", t:"load", f:1, note:"Alternativa si no hay máquina sentada."},
+    ]},
+    {id:"hA5", m:"Gemelo", setsByWeek:B3, lo:12, hi:15, rest:"1 min", def:[0], v:[
+      {id:"calf_deficit", n:"Elevación de gemelo en déficit", t:"load", f:1, note:"Pausa 2s abajo en estiramiento. Dorsiflexión de tobillo = requisito de sentadilla profunda."},
+      {id:"calf_smith", n:"Elevación de gemelo en máquina o Smith", t:"load", f:1, note:"Alternativa sin déficit si no hay step disponible."},
+    ]},
+    {id:"hA6", m:"Aductor", setsByWeek:B2, lo:20, hi:30, rest:"45s", def:[0], repLabel:"seg", v:[
+      {id:"copenhagen", n:"Plancha Copenhague", t:"bw", f:1, note:"Aductor: la lesión de ingle más común en gente que corre y levanta. Por lado."},
+      {id:"copenhagen_bent", n:"Plancha Copenhague con rodilla flexionada", t:"bw", f:0.8, note:"Alternativa más fácil, apoyo en rodilla del pie de arriba."},
+    ]},
+  ],
+  cardio:null,
+  cooldown:["90/90 de cadera, 2 min.","Sentadilla profunda sostenida con contrapeso, 1-2 min."],
 };
 
-/* Periodización real de Nippard: 12 semanas en dos bloques de 6. Cada bloque
-   abre con una semana intro/suave (1 y 6). El resto son de acumulación/pico:
-   última serie al fallo con la técnica asignada a cada ejercicio (vive en el
-   slot, no aquí). La cantidad de series NO va en el CYCLE: vive en slot.setsByWeek. */
-const NIPPARD_CYCLE = [
-  {n:1,  phase:"Intro",       rpe:"7-8", failure:false,
-   note:"Semana de entrada del bloque 1. Deja 2-3 reps en reserva en TODAS las series. Sin fallo, sin técnicas: readapta y prepara el bloque."},
-  {n:2,  phase:"Acumulación", rpe:"8-9", failure:true,
-   note:"Empieza la acumulación. Series tempranas a RPE 8-9 y la ÚLTIMA serie de cada ejercicio al fallo con su técnica."},
-  {n:3,  phase:"Acumulación", rpe:"8-9", failure:true,
-   note:"Última serie al fallo con su técnica. Empuja donde la app te marque en naranja."},
-  {n:4,  phase:"Acumulación", rpe:"8-9", failure:true,
-   note:"Última serie al fallo. Añade la serie que suba la matriz y cuida el sueño."},
-  {n:5,  phase:"Acumulación", rpe:"8-9", failure:true,
-   note:"Cierre del bloque 1. Última serie al fallo con su técnica."},
-  {n:6,  phase:"Intro",       rpe:"7-8", failure:false,
-   note:"Semana de entrada del bloque 2. Igual que la 1: 2-3 reps en reserva, sin fallo. Baja el pie del acelerador para volver a subir."},
-  {n:7,  phase:"Acumulación", rpe:"8-9", failure:true,
-   note:"Arranca el bloque 2. Última serie al fallo con su técnica."},
-  {n:8,  phase:"Acumulación", rpe:"8-9", failure:true,
-   note:"Última serie al fallo con su técnica. El volumen sigue subiendo."},
-  {n:9,  phase:"Acumulación", rpe:"8-9", failure:true,
-   note:"Última serie al fallo. Muchos ejercicios saltan a 3 series."},
-  {n:10, phase:"Acumulación", rpe:"8-9", failure:true,
-   note:"Última serie al fallo con su técnica. Antesala del pico."},
-  {n:11, phase:"Pico",        rpe:"9-10", failure:true,
-   note:"PICO. Volumen máximo según la matriz. Última serie al fallo con su técnica. No hay descarga: el bloque termina arriba."},
-  {n:12, phase:"Pico",        rpe:"9-10", failure:true,
-   note:"PICO. Semana más dura del ciclo. Dalo todo con buena forma y cierra el bloque."},
+const HIBRIDO_B = {
+  name:"Tren superior", sub:"Fuerza + VO2max",
+  warm:["Bici o remo suave, 3 min.","Movilidad escapular y de hombro.","2 series ligeras de press banca con la barra vacía."],
+  slots:[
+    {id:"hB1", m:"Pecho", setsByWeek:B4, lo:4, hi:6, rest:"3 min", def:[0], v:[
+      {id:"bench", n:"Press banca con barra", t:"load", f:1, note:"Barra al pecho, sin rebote."},
+      {id:"bench_db", n:"Press banca con mancuernas", t:"perSide", f:0.9, note:"Alternativa, más ROM."},
+    ]},
+    {id:"hB2", m:"Espalda", setsByWeek:B4, lo:4, hi:6, rest:"2-3 min", def:[0], v:[
+      {id:"weighted_pullup", n:"Dominadas lastradas", t:"bw", f:1, note:"Extensión completa abajo. Campo = peso añadido."},
+      {id:"pulldown_heavy", n:"Jalón al pecho", t:"load", f:1, note:"Si no llegas a 6 dominadas limpias: jalón al pecho 4×6-8."},
+    ]},
+    {id:"hB3", m:"Hombro", setsByWeek:B3, lo:6, hi:8, rest:"2 min", def:[0], v:[
+      {id:"ohp", n:"Press militar de pie", t:"load", f:1, note:"De pie, no sentado. Bloqueo completo overhead = movilidad de hombro y torácica bajo carga."},
+      {id:"ohp_db", n:"Press militar de pie con mancuernas", t:"perSide", f:0.85, note:"Alternativa."},
+    ]},
+    {id:"hB4", m:"Espalda", setsByWeek:B3, lo:6, hi:8, rest:"2 min", def:[0], v:[
+      {id:"row_pendlay", n:"Remo con barra (Pendlay o inclinado)", t:"load", f:1, note:"Torso paralelo, sin impulso lumbar."},
+      {id:"row_chest_sup", n:"Remo con apoyo en pecho", t:"load", f:1, note:"Alternativa sin exigencia lumbar."},
+    ]},
+    {id:"hB5", m:"Hombro", setsByWeek:B3, lo:15, hi:20, rest:"1 min", def:[0], v:[
+      {id:"facepull", n:"Face pull en polea", t:"load", f:1, note:"Salud de hombro y rotadores externos."},
+      {id:"reardelt", n:"Pájaro (rear delt) en polea o mancuernas", t:"load", f:0.9, note:"Alternativa."},
+    ]},
+  ],
+  get cardio(){ return hibridoIntervalCardio(viewWeek()); },
+  cooldown:["Vuelta a la calma tras los intervalos, 5 min a ritmo suave."],
+};
+
+const HIBRIDO_C = {
+  name:"Tren inferior", sub:"Bisagra + resistencia-fuerza",
+  warm:["Bici o remo suave, 3 min.","Movilidad de cadera (hip hinge con palo).","2 series ligeras de peso muerto con poco peso."],
+  slots:[
+    {id:"hC1", m:"Isquios", setsByWeek:B3, lo:3, hi:5, rest:"3-5 min", def:[0], v:[
+      {id:"deadlift", n:"Peso muerto convencional", t:"load", f:1, note:"Resetear cada rep."},
+      {id:"deadlift_trap", n:"Peso muerto con trap bar", t:"load", f:1, note:"Preferible si tienes cualquier historial lumbar."},
+    ]},
+    {id:"hC2", m:"Cuádriceps", setsByWeek:B3, lo:8, hi:10, rest:"2 min", def:[0], v:[
+      {id:"front_squat", n:"Sentadilla frontal", t:"load", f:1, note:"Torso vertical, profundidad máxima. Exige y construye movilidad de tobillo y torácica."},
+      {id:"goblet_squat_c", n:"Sentadilla goblet", t:"load", f:0.6, note:"Alternativa más accesible."},
+    ]},
+    {id:"hC3", m:"Cuádriceps", setsByWeek:[2,2,2,1,2,2,2,1,2,2,2,1], lo:12, hi:12, rest:"1-2 min", def:[0], v:[
+      {id:"lunge_walk_c", n:"Zancada caminando con mancuernas", t:"perSide", f:1, note:"Componente de resistencia-fuerza real. Por pierna."},
+      {id:"lunge_static_c", n:"Zancada estática con mancuernas", t:"perSide", f:0.9, note:"Alternativa en espacio reducido."},
+    ]},
+    {id:"hC4", m:"Glúteo", setsByWeek:B3, lo:10, hi:12, rest:"1-2 min", def:[0], v:[
+      {id:"hipthrust", n:"Hip thrust", t:"load", f:1, note:"Pausa 1s arriba."},
+      {id:"glutebridge_c", n:"Puente de glúteo", t:"load", f:0.8, note:"Alternativa sin banco."},
+    ]},
+    {id:"hC5", m:"Agarre", setsByWeek:B3, lo:40, hi:40, rest:"1-2 min", def:[0], repLabel:"m", v:[
+      {id:"farmer", n:"Farmer carry", t:"perSide", f:1, note:"Agarre, core, postura escapular. Peso: el máximo que aguantes 40m sin soltar."},
+      {id:"suitcase_carry", n:"Suitcase carry (un lado)", t:"load", f:0.7, note:"Alternativa: reto extra de anti-flexión lateral."},
+    ]},
+    {id:"hC6", m:"Core", setsByWeek:B3, lo:8, hi:12, rest:"1 min", def:[0], v:[
+      {id:"ab_wheel", n:"Rueda abdominal", t:"bw", f:1, note:"Anti-extensión."},
+      {id:"deadbug_c", n:"Dead bug", t:"bw", f:0.6, note:"Alternativa más accesible."},
+    ]},
+  ],
+  cardio:null,
+  cooldown:["Movilidad de tobillo contra la pared, 2 min.","Estiramiento de flexores de cadera en zancada, 2 min."],
+};
+
+const HIBRIDO_D = {
+  name:"Tren superior", sub:"Resistencia-fuerza + Zona 2",
+  warm:["Bici o remo suave, 3 min.","Band pull-aparts, 2×15.","2 series ligeras de press inclinado."],
+  slots:[
+    {id:"hD1", m:"Pecho", setsByWeek:B3, lo:8, hi:12, rest:"1-2 min", def:[0], v:[
+      {id:"incline_db", n:"Press inclinado con mancuernas", t:"perSide", f:1, note:"Mancuernas > barra aquí: más ROM y estiramiento del pectoral."},
+      {id:"incline_bar", n:"Press inclinado con barra", t:"load", f:1.4, note:"Alternativa."},
+    ]},
+    {id:"hD2", m:"Espalda", setsByWeek:B3, lo:10, hi:12, rest:"1-2 min", def:[0], v:[
+      {id:"row_1arm_db", n:"Remo con mancuerna a una mano", t:"load", f:1, note:"Estiramiento completo abajo, protracción escapular incluida."},
+      {id:"row_cable_d", n:"Remo sentado en polea", t:"load", f:1, note:"Alternativa."},
+    ]},
+    {id:"hD3", m:"Tríceps", setsByWeek:B3, lo:8, hi:12, rest:"1-2 min", def:[0], v:[
+      {id:"dips", n:"Fondos en paralelas", t:"bw", f:1, note:"Bajar hasta hombro a la altura del codo, no más."},
+      {id:"close_bench", n:"Press cerrado con barra", t:"load", f:1.2, note:"Alternativa."},
+    ]},
+    {id:"hD4", m:"Espalda", setsByWeek:B3, lo:8, hi:15, rest:"1-2 min", def:[0], v:[
+      {id:"pulldown_sup", n:"Jalón supino", t:"load", f:1, note:"AMRAP dejando 2 reps en reserva."},
+      {id:"pullup_sup", n:"Dominada supina", t:"bw", f:1, note:"Alternativa con peso corporal — AMRAP dejando 2 en reserva."},
+    ]},
+    {id:"hD5", m:"Brazo", setsByWeek:B3, lo:12, hi:15, rest:"1 min", def:[0], v:[
+      {id:"curl_incline", n:"Curl inclinado + extensión de tríceps overhead", t:"load", f:1, note:"Superserie: ambos entrenan el músculo en posición alargada. Sin descanso entre los dos."},
+      {id:"curl_bar_d", n:"Curl con barra + extensión en polea", t:"load", f:1, note:"Alternativa a la superserie."},
+    ]},
+    {id:"hD6", m:"Hombro", setsByWeek:B2, lo:15, hi:20, rest:"45s", def:[0], v:[
+      {id:"lat_raise", n:"Elevación lateral", t:"perSide", f:1, note:"Salud y estabilidad de hombro."},
+      {id:"lat_raise_cable", n:"Elevación lateral en polea", t:"load", f:0.9, note:"Alternativa, tensión constante."},
+    ]},
+  ],
+  get cardio(){ return hibridoZone2Cardio(viewWeek()); },
+  cooldown:[],
+};
+
+const HIBRIDO_LIGHT = { name:"Zona 2 opcional", sub:"Fuera del gym",
+  cardioDay:{dur:"30-45 min", phases:["Ritmo conversacional todo el bloque (caminar o bici)."],
+    alts:["Caminata al aire libre.","Bici suave.","Actividad libre que te guste — lo que importa es sumar minutos fáciles."]} };
+const HIBRIDO_REST = { rest:true, name:"Descanso", sub:"Recuperación",
+  tips:["Día completo sin entrenar.","Caminar cuenta, pero sin objetivo de tiempo ni ritmo.","4 sesiones estructuradas + movimiento diario es la base del programa — este día es del segundo tipo."] };
+
+function hibridoIntervalCardio(w){
+  const reps=[3,3,3,2,4,4,4,2,4,4,4,2][w-1]||3;
+  const power = w>=9 ? " (mayor potencia)" : "";
+  return {tipo:`Intervalos 4×4 en bici o remo${power}`, intensidad:"90-95% FCmax en el trabajo, ~70% FCmax en la recuperación",
+    dur:`${reps}×4 min (+8 min calentamiento, +3 min recup. entre series, +5 min vuelta a la calma)`,
+    nota:"Nunca corriendo: el daño excéntrico interfiere con la recuperación de sentadilla/peso muerto. Al final de cada intervalo solo deberías poder decir 2-3 palabras seguidas. Siempre al cierre de la fuerza, nunca antes."};
+}
+function hibridoZone2Cardio(w){
+  const min=[30,30,30,25,35,35,35,25,40,40,40,25][w-1]||30;
+  return {tipo:"Zona 2 continua (bici, elíptica, cinta en pendiente o remo)", intensidad:"60-70% FCmax, ritmo conversacional",
+    dur:`${min} min`, nota:"Deberías poder mantener una frase completa sin quedarte sin aire. Si dudas, ve más lento — el error clásico es que la \"Zona 2\" acaba siendo zona 3. Al cierre de la fuerza."};
+}
+const HIBRIDO_PROGRAM = {
+  lun: HIBRIDO_A, mar: HIBRIDO_B, mie: HIBRIDO_LIGHT, jue: HIBRIDO_C, vie: HIBRIDO_D, sab: HIBRIDO_LIGHT, dom: HIBRIDO_REST,
+};
+
+/* Periodización híbrida: 3 mesociclos de 4 semanas, semana 4 de cada uno es
+   descarga (mitad de series, RPE 6). RPE 7-8 el resto del tiempo — nunca al
+   fallo (evidencia: Robinson/Zourdos 2024, la hipertrofia depende de cercanía
+   al fallo pero la fuerza no; ir al fallo solo agrega fatiga que arruina el
+   cardio). failure queda en false siempre por eso. */
+const HIBRIDO_CYCLE = [
+  {n:1,  phase:"Meso 1", rpe:7,     failure:false, deload:false, note:"Semana 1 de 4. Series completas, RPE 7 (deja 3 reps en reserva). Introducción del bloque — prioriza técnica sobre carga."},
+  {n:2,  phase:"Meso 1", rpe:7.5,   failure:false, deload:false, note:"Semana 2 de 4. Series completas, RPE 7.5."},
+  {n:3,  phase:"Meso 1", rpe:"8-8.5", failure:false, deload:false, note:"Semana 3 de 4. Pico del bloque: series completas, RPE 8-8.5 (1-2 reps en reserva)."},
+  {n:4,  phase:"Descarga", rpe:6,   failure:false, deload:true,  note:"Descarga. Mitad de las series, RPE 6. No es opcional: aquí se consolida la adaptación del bloque."},
+  {n:5,  phase:"Meso 2", rpe:7,     failure:false, deload:false, note:"Semana 1 del bloque 2. Vuelves con la carga pico del bloque anterior +2.5-5kg en los básicos. RPE 7."},
+  {n:6,  phase:"Meso 2", rpe:7.5,   failure:false, deload:false, note:"Semana 2 de 4. Series completas, RPE 7.5."},
+  {n:7,  phase:"Meso 2", rpe:"8-8.5", failure:false, deload:false, note:"Semana 3 de 4. Pico del bloque, RPE 8-8.5."},
+  {n:8,  phase:"Descarga", rpe:6,   failure:false, deload:true,  note:"Descarga. Mitad de las series, RPE 6."},
+  {n:9,  phase:"Meso 3", rpe:7,     failure:false, deload:false, note:"Semana 1 del bloque 3, último del ciclo. Carga pico anterior +2.5-5kg. RPE 7."},
+  {n:10, phase:"Meso 3", rpe:7.5,   failure:false, deload:false, note:"Semana 2 de 4. Series completas, RPE 7.5."},
+  {n:11, phase:"Meso 3", rpe:"8-8.5", failure:false, deload:false, note:"Semana 3 de 4. Pico del ciclo completo, RPE 8-8.5."},
+  {n:12, phase:"Descarga", rpe:6,   failure:false, deload:true,  note:"Descarga final. Mitad de las series, RPE 6. Cierra el ciclo de 12 semanas — buen momento para retestear tus marcadores (sentadilla, press banca, 2000m remo o Cooper, dominadas, farmer carry, movilidad)."},
 ];
 
 const DAYS=["lun","mar","mie","jue","vie","sab","dom"];
@@ -545,7 +469,7 @@ function mariCardio(dur,phases,alts){ return { name:"Cardio", sub:dur, cardioDay
 function mariABPattern(w){ return ((w-3)%2===0) ? ["A","B","A"] : ["B","A","B"]; }
 
 function mariDayFor(dayKey){
-  const w=Math.max(1,absWeek());
+  const w=viewWeek();
   if(w<=2){
     if(dayKey==="lun") return MARI_A;
     if(dayKey==="jue") return MARI_B;
@@ -700,12 +624,12 @@ const ls={ get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},
            set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},
            del:k=>{try{localStorage.removeItem(k)}catch(e){}} };
 
-/* Qué rutina se ve depende de quién entró: Jp ve Nippard, Mari ve la suya.
+/* Qué rutina se ve depende de quién entró: Jp ve el Híbrido, Mari ve la suya.
    PROGRAM es "let" (no "const") justo por esto — se reapunta al loguearse. */
-let CYCLE=NIPPARD_CYCLE;
+let CYCLE=HIBRIDO_CYCLE;
 function setActiveUser(u){
   activeUser=u;
-  PROGRAM = (u&&u.toLowerCase()==="mari") ? MARI_PROGRAM : NIPPARD_PROGRAM;
+  PROGRAM = (u&&u.toLowerCase()==="mari") ? MARI_PROGRAM : HIBRIDO_PROGRAM;
 }
 let activeUser, PROGRAM;
 setActiveUser(ls.get(UKEY)||"Jp");
@@ -818,20 +742,28 @@ async function boot(){
 addEventListener("online",()=>{ if(API&&token){ pushEnabled?push():sync(); } });
 function todayISO(){ const d=new Date(); return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); }
 function absWeek(){ return Math.max(1,Math.floor((new Date(todayISO())-new Date(DB.start))/(7*864e5))+1); }
+/* Navegación de semanas: antes la semana mostrada era SIEMPRE la real (hoy
+   vs DB.start), sin forma de ver otra — el usuario la reportó como "bloqueada".
+   weekOffset la desplaza; viewWeek() es la semana que se muestra/edita en
+   vez de absWeek() en todos lados (fase, series objetivo, y qué fecha cae
+   cada día de nav). Solo se resetea manualmente (botón "hoy" o flechas). */
+let weekOffset=0;
+function viewWeek(){ return Math.max(1, absWeek()+weekOffset); }
 /* La rutina de Mari no se repite en un bloque fijo de N semanas como la de
    Jp: crece linealmente (sem1-2, sem3-4, sem5+ para siempre), así que no
    tiene sentido aplicarle el módulo de CYCLE.length. */
-function cycleWeek(){ return activeUser&&activeUser.toLowerCase()==="mari" ? absWeek() : ((absWeek()-1)%CYCLE.length)+1; }
-function blockIdx(){ return activeUser&&activeUser.toLowerCase()==="mari" ? 0 : Math.floor((absWeek()-1)/CYCLE.length)%2; }
-function phase(){ return activeUser&&activeUser.toLowerCase()==="mari" ? mariPhaseInfo(absWeek()) : CYCLE[cycleWeek()-1]; }
-/* Fecha ISO del día de la semana que se está VIENDO, dentro de la semana en curso.
-   Para el día de hoy = todayISO(); para otro día = su fecha en esta misma semana.
+function cycleWeek(){ return activeUser&&activeUser.toLowerCase()==="mari" ? viewWeek() : ((viewWeek()-1)%CYCLE.length)+1; }
+function blockIdx(){ return activeUser&&activeUser.toLowerCase()==="mari" ? 0 : Math.floor((viewWeek()-1)/CYCLE.length)%2; }
+function phase(){ return activeUser&&activeUser.toLowerCase()==="mari" ? mariPhaseInfo(viewWeek()) : CYCLE[cycleWeek()-1]; }
+/* Fecha ISO del día de la semana que se está VIENDO, dentro de la semana
+   elegida (real + weekOffset). Para hoy con offset 0 = todayISO(); para
+   otro día u otra semana = su fecha correspondiente.
    Antes todo se leía de DB.log[todayISO()], así que al mirar un día distinto de hoy
    las series guardadas salían vacías (bug de la sección 5). */
 function viewISO(){
   const di=DAYS.indexOf(day); if(di<0) return todayISO();
   const todayIdx=(new Date().getDay()+6)%7;
-  return new Date(new Date(todayISO())-(todayIdx-di)*864e5).toISOString().slice(0,10);
+  return new Date(new Date(todayISO())-(todayIdx-di)*864e5+weekOffset*7*864e5).toISOString().slice(0,10);
 }
 
 /* ===== CARGA EFECTIVA — la clave de todo ===== */
@@ -923,6 +855,9 @@ async function doLogout(){
   render(); showAuth();
 }
 document.getElementById("outbtn").onclick=doLogout;
+document.getElementById("wkprev").onclick=()=>{ if(viewWeek()<=1) return; weekOffset--; draft={}; render(); };
+document.getElementById("wknext").onclick=()=>{ weekOffset++; draft={}; render(); };
+document.getElementById("wklabel").onclick=()=>{ if(!weekOffset) return; weekOffset=0; draft={}; render(); toast("Semana actual"); };
 
 function renderNav(){
   nav.innerHTML=DAYS.map(d=>`<button data-d="${d}" class="${d===day?"on":""} ${PROGRAM[d].rest?"rest":""}">${LABEL[d]}</button>`).join("")
@@ -936,7 +871,7 @@ function phaseHTML(){
       <div class="pill">Semana ${ph.n}</div></div><p>${ph.note}</p></div>`;
   }
   const cw=cycleWeek();
-  const bar=CYCLE.map(c=>`<i class="${c.n===cw?"now":c.phase==="Intro"?"dl":c.n<cw?"done":""}"></i>`).join("");
+  const bar=CYCLE.map(c=>`<i class="${c.n===cw?"now":c.deload?"dl":c.n<cw?"done":""}"></i>`).join("");
   return `<div class="phase ${PC[ph.phase]}"><div class="top"><div class="ttl">${ph.phase}</div>
     <div class="pill">RPE ${ph.rpe} · ${ph.failure?"última al fallo":"sin fallo"}</div></div>
     <p>${ph.note}</p>${ph.failure?`<div class="tech">Técnicas activas: cada ejercicio muestra la suya en su última serie.</div>`:""}
@@ -966,6 +901,10 @@ function activeRestHTML(a){
   return `<div class="block cardio"><h3>Descanso activo <span class="tag t-fin">${a.dur}</span></h3>
     <ul><li>${a.detail}</li></ul></div>
     <div class="block"><h3>Alternativas</h3><ul>${a.alts.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
+}
+function cooldownHTML(list){
+  return `<div class="block"><h3>Movilidad <span class="tag t-fin">después</span></h3>
+    <ul>${list.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
 }
 
 /* ===== RESUMEN: volumen por grupo muscular (suma TODAS las variantes) ===== */
@@ -1010,8 +949,12 @@ function renderSummary(){
 function render(){
   renderU();
   const isMari=activeUser&&activeUser.toLowerCase()==="mari";
-  document.getElementById("wklabel").textContent = isMari
-    ? `Semana ${absWeek()}` : `Bloque ${blockIdx()?"B":"A"} · Sem ${cycleWeek()}/12`;
+  const wklabelEl=document.getElementById("wklabel");
+  wklabelEl.textContent = isMari
+    ? `Semana ${viewWeek()}` : `Bloque ${blockIdx()?"B":"A"} · Sem ${cycleWeek()}/12`;
+  wklabelEl.style.color = weekOffset ? "var(--signal)" : "";
+  document.getElementById("wknext").disabled = false;
+  document.getElementById("wkprev").disabled = viewWeek()<=1;
   if(day==="sum"){ document.getElementById("today").textContent="Resumen"; return renderSummary(); }
 
   const p=PROGRAM[day];
@@ -1044,7 +987,8 @@ function render(){
     <div class="block"><h3>Movilidad <span class="tag t-mov">antes</span></h3>
       <ul>${p.warm.map(w=>`<li>${w}</li>`).join("")}</ul></div>
     <div class="block" id="exblock"></div>
-    ${cardioHTML(p)}`+toolsHTML();
+    ${cardioHTML(p)}
+    ${p.cooldown&&p.cooldown.length?cooldownHTML(p.cooldown):""}`+toolsHTML();
 
   const eb=document.getElementById("exblock");
   eb.innerHTML=p.slots.map(s=>slotHTML(s,dayLog)).join("");
